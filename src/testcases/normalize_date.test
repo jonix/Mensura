@@ -1,0 +1,27 @@
+#@ source: parse-datetime.sh
+
+## Format:
+## Översta raden @ source: shell scriptet som innehåller funktionerna som anropas här
+## funktions-namn|input-parameter|förväntad output resultat
+
+# -- Kolla vilken datum format man kan ha --
+__normalize_date|2025-04-03|2025-04-03
+__normalize_date|2025/04/03|2025-04-03
+__normalize_date|20250403|2025-04-03
+
+__normalize_date|25-04-03|2025-04-03
+__normalize_date|25/04/03|2025-04-03
+__normalize_date|250403|2025-04-03
+
+__normalize_date|04-03|2025-04-03
+__normalize_date|04/03|2025-04-03
+__normalize_date|0403|2025-04-03
+
+# Kolla att det inte går att ange felaktigt datum
+__normalize_date|2025-02-31|1
+__normalize_date|2025-13-01|1
+
+
+# Kontroller att skottdagar fungerar
+__normalize_date|2024-02-29|2024-02-29
+__normalize_date|2025-02-29|1

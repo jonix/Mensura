@@ -1,0 +1,7 @@
+#@ source: normalize-datetime.sh
+__time_or_offset|930|OFFSET
+__time_or_offset|1030|TIME
+__time_or_offset|10:30|TIME
+__time_or_offset|abcd|ERROR
+__time_or_offset|+45m|OFFSET
+__time_or_offset|30|OFFSET

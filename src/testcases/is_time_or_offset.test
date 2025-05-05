@@ -1,0 +1,45 @@
+#@ source: parse-datetime.sh
+
+# En offset
+# Offset regler: Måste alltid innehålla enhet, med eller utan prefixet +
+
+# # -- Med datum --
+__is_time_or_offset|2025-03-30|TIME
+__is_time_or_offset|2025-03-30T07:30|TIME
+
+
+# # -- Med datum och Offset
+__is_time_or_offset|2025-03-30 +1h|OFFSET
+__is_time_or_offset|2025-03-30 +30m|OFFSET
+__is_time_or_offset|2025-03-30 +1h30m|OFFSET
+
+# # -- Med datum klockslag och Offset
+__is_time_or_offset|2025-03-30T09:00 +1h|OFFSET
+__is_time_or_offset|2025-03-30T10:00 +30m|OFFSET
+__is_time_or_offset|2025-03-30T11:00 +1h30m|OFFSET
+
+
+# # -- Enbart klockslag --
+__is_time_or_offset|930|OFFSET
+__is_time_or_offset|1030|TIME
+
+__is_time_or_offset|10:30|TIME
+__is_time_or_offset|10.30|TIME
+
+# # -- Enbart offset, med prefix + --
+__is_time_or_offset|+1h|OFFSET
+__is_time_or_offset|+45m|OFFSET
+__is_time_or_offset|+1h30m|OFFSET
+
+# # -- Enbart offset, utan prefix + --
+__is_time_or_offset|1h|OFFSET
+__is_time_or_offset|45m|OFFSET
+__is_time_or_offset|1h30m|OFFSET
+
+# # -- Fel hantering --
+__is_time_or_offset|abcd|1
+__is_time_or_offset|+abc|1
+__is_time_or_offset|+ahbm|1
+__is_time_or_offset|+1hbm|1
+__is_time_or_offset|+1b5m|1
+__is_time_or_offset|today|1

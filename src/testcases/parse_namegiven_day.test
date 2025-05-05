@@ -1,0 +1,44 @@
+#@ source: parse-datetime.sh
+## Format:
+## Översta raden @ source: shell scriptet som innehåller funktionerna som anropas här
+##
+## funktions-namn|input-parameter|förväntad output resultat
+##
+## Om output enbart innehåller ett heltal, så jämförs funktionens retur-värde istället för ouptut-text
+##
+## Om in-parameter eller förväntad-fältet inehåller $(...) så kommer den funktionen att first evalueras och sedan jämföras
+# Tex: __parse_day_str|today|$(date +%Y-%m-%d)T$(date +%H:%M)
+
+
+# Olika format på today etc.
+
+__parse_namegiven_day|idag|$(date +%Y-%m-%d)T08:00
+__parse_namegiven_day|imorgon|$(date -d tomorrow +%Y-%m-%d)T08:00
+
+__parse_namegiven_day|today|$(date +%Y-%m-%d)T08:00
+__parse_namegiven_day|tomorrow|$(date -d tomorrow +%Y-%m-%d)T08:00
+__parse_namegiven_day|tomorow|$(date -d tomorrow +%Y-%m-%d)T08:00
+__parse_namegiven_day|tom|$(date -d tomorrow +%Y-%m-%d)T08:00
+
+
+# Olika namngivna dagar, Engelska fulla
+__parse_namegiven_day|monday|$(date -d "next monday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|tuesday|$(date -d "next tuesday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|wednesday|$(date -d "next wednesday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|thursday|$(date -d "next thursday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|friday|$(date -d "next friday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|saturday|$(date -d "next saturday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|sunday|$(date -d "next sunday" +%Y-%m-%d)T08:00
+
+# Olika namngivna dagar, Engelska fökortade
+__parse_namegiven_day|mon|$(date -d "next monday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|tues|$(date -d "next tuesday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|wed|$(date -d "next wednesday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|thurs|$(date -d "next thursday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|fri|$(date -d "next friday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|satur|$(date -d "next saturday" +%Y-%m-%d)T08:00
+__parse_namegiven_day|sun|$(date -d "next sunday" +%Y-%m-%d)T08:00
+
+# Förväntad Felaktig input
+__parse_namegiven_day|blargh|ERROR
+__parse_namegiven_day|nope|ERROR

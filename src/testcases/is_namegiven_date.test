@@ -1,0 +1,37 @@
+#@ source: parse-datetime.sh
+## Format:
+## Översta raden @ source: shell scriptet som innehåller funktionerna som anropas här
+##
+## funktions-namn|input-parameter|förväntad output resultat
+##
+## Om output enbart innehåller ett heltal, så jämförs funktionens retur-värde istället för ouptut-text
+##
+## Om in-parameter eller förväntad-fältet inehåller $(...) så kommer den funktionen att first evalueras och sedan jämföras
+# Tex: __parse_day_str|today|$(date +%Y-%m-%d)T$(date +%H:%M)
+
+__is_namegiven_day|monday|0
+__is_namegiven_day|tuesday|0
+__is_namegiven_day|wednesday|0
+__is_namegiven_day|thursday|0
+__is_namegiven_day|friday|0
+__is_namegiven_day|saturday|0
+__is_namegiven_day|sunday|0
+
+__is_namegiven_day|måndag|0
+__is_namegiven_day|tisdag|0
+__is_namegiven_day|onsdag|0
+__is_namegiven_day|torsdag|0
+__is_namegiven_day|fredag|0
+__is_namegiven_day|lördag|0
+__is_namegiven_day|söndag|0
+
+__is_namegiven_day|idag|0
+__is_namegiven_day|imorgon|0
+
+__is_namegiven_day|today|0
+__is_namegiven_day|tomorrow|0
+__is_namegiven_day|tomorow|0
+__is_namegiven_day|tom|0
+
+
+__is_namegiven_day|lordsday|1

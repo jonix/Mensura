@@ -1,0 +1,17 @@
+#@ source: parse-datetime.sh
+
+## -- Tolkar en stund i alla dess former ---
+__normalize_duration|20|20 minutes
+__normalize_duration|20m|20 minutes
+__normalize_duration|20min|20 minutes
+__normalize_duration|20minutes|20 minutes
+__normalize_duration|20minuter|20 minutes
+
+__normalize_duration|1h|1 hour
+__normalize_duration|20h|20 hour
+__normalize_duration|2hr|2 hour
+__normalize_duration|2hours|2 hour
+__normalize_duration|3t|3 hour
+__normalize_duration|3tim|3 hour
+__normalize_duration|3timmar|3 hour
+

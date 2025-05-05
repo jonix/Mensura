@@ -1,0 +1,80 @@
+#@ source: parse-datetime.sh
+
+
+# Fomer med fullständiga datum+tid
+__normalize_datetime|2025-03-10 10:00|2025-03-10T10:00
+__normalize_datetime|2025/03/10 10:00|2025-03-10T10:00
+__normalize_datetime|25-03-10 10:00|2025-03-10T10:00
+__normalize_datetime|25/03/10 10:00|2025-03-10T10:00
+__normalize_datetime|03-10 10:00|2025-03-10T10:00
+__normalize_datetime|03/10 10:00|2025-03-10T10:00
+
+
+# Former bara datum
+# Förväntas att Default default start of day (08:00) används
+__normalize_datetime|2025-03-10|2025-03-10T08:00
+__normalize_datetime|2025/03/10|2025-03-10T08:00
+__normalize_datetime|25-03-10|2025-03-10T08:00
+__normalize_datetime|25/03/10|2025-03-10T08:00
+__normalize_datetime|03-10|2025-03-10T08:00
+__normalize_datetime|03/10|2025-03-10T08:00
+
+
+
+#__normalize_datetime|10:00|2025-03-10T08:00
+
+
+
+
+
+#__parse_datetime|today $(date +%H:%M)|$(date +%Y-%m-%d)T$(date +%H:%M)
+#__parse_datetime|monday 07:00|$(date -d 'monday' +%Y-%m-%d)T07:00
+#__parse_datetime|today +30m|$(date -d 'now +30 minutes' +%Y-%m-%dT%H:%M)
+
+#__parse_datetime|monday 07:00|$(date -d 'monday' +%Y-%m-%d)T07:00
+
+# Dagar utan tidangivelse, starta enligt default start på dagen
+#__parse_datetime|now|dagens-datumTtid
+
+# __parse_datetime|nu|dagens-datumTtid
+# __parse_datetime|today|dagens-datumT08:00
+# __parse_datetime|idag|dagens-datumT08:00
+# __parse_datetime|friday|nästa-fredagT08:00
+# __parse_datetime|fredag|nästa-fredagT08:00
+
+# # Idag och tolkning av klockslag
+# __parse_datetime|today 10:00|dagens-datumT10:00
+# __parse_datetime|today 10.00|dagens-datumT10:00
+# __parse_datetime|today 1000|dagens-datumT10:00
+
+# #Namngivna dagar
+# __parse_datetime|torsdag 13:00|nästa-torsdagT13:00
+# __parse_datetime|thursday 13.00|nästa-torsdagT13:00
+# __parse_datetime|tor 1300|nästa-torsdagT13:00
+
+
+# # Offset tid med plus, alltid enheter
+# __parse_datetime|now +30m|dagens-datumTtid+30m
+# __parse_datetime|nu +30m|dagens-datumTtid+30m
+# __parse_datetime|today +1h|dagens-datumT08:00+1h
+# __parse_datetime|idag|dagens-datumT08:00+1h
+# __parse_datetime|friday +1h|nästa-fredagT08:00+1h
+# __parse_datetime|fredag +1h|nästa-fredagT08:00+1h
+
+# # Offset tid, utan plus, alltid enheter
+# __parse_datetime|now 30m|dagens-datumTtid+30m
+# __parse_datetime|nu 30m|dagens-datumTtid+30m
+# __parse_datetime|today 1h|dagens-datumT08:00+1h
+# __parse_datetime|idag|dagens-datumT08:00+1h
+# __parse_datetime|friday 1h|nästa-fredagT08:00+1h
+# __parse_datetime|fredag 1h|nästa-fredagT08:00+1h
+
+
+
+# # och annat
+# __parse_datetime|idag|dagens-datumT08:00+1h
+# __parse_datetime|friday +1h|nästa-fredagT08:00+1h
+# __parse_datetime|fredag +1h|nästa-fredagT08:00+1h
+
+
+

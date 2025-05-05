@@ -1,0 +1,51 @@
+#@ source: parse-datetime.sh
+## Format:
+## Översta raden @ source: shell scriptet som innehåller funktionerna som anropas här
+# funktions-namn|input-parameter|förväntad output resultat
+
+## -- Klockslag en bit framåt i livet ---
+__normalize_offset|10|10 minutes
+__normalize_offset|10|10 minutes
+__normalize_offset|10m|10 minutes
+__normalize_offset|10min|10 minutes
+__normalize_offset|10minutes|10 minutes
+__normalize_offset|10minuter|10 minutes
+
+__normalize_offset|+10|10 minutes
+__normalize_offset|+10m|10 minutes
+__normalize_offset|+10min|10 minutes
+__normalize_offset|+10minutes|10 minutes
+__normalize_offset|+10minuter|10 minutes
+
+__normalize_offset|1h|1 hours
+__normalize_offset|1hr|1 hours
+__normalize_offset|1hour|1 hours
+__normalize_offset|1hours|1 hours
+
+__normalize_offset|1t|1 hours
+__normalize_offset|1tim|1 hours
+__normalize_offset|1timme|1 hours
+__normalize_offset|1timmar|1 hours
+
+__normalize_offset|+1h|1 hours
+__normalize_offset|+1hr|1 hours
+__normalize_offset|+1hour|1 hours
+__normalize_offset|+1hours|1 hours
+
+__normalize_offset|+1t|1 hours
+__normalize_offset|+1tim|1 hours
+__normalize_offset|+1timme|1 hours
+__normalize_offset|+1timmar|1 hours
+
+__normalize_offset|+10h|10 hours
+__normalize_offset|2h|2 hours
+
+__normalize_offset|+1h30m|1 hours 30 minutes
+
+
+
+
+
+
+
+

@@ -1,0 +1,4 @@
+#@ source: parse-datetime.sh
+
+__split_datetime|2025-03-30T08:30|2025-03-30 08:30
+__split_datetime|2025-03-30 09:45|2025-03-30 09:45

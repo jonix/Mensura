@@ -1,0 +1,28 @@
+#@ source: parse-datetime.sh
+## Format:
+## Översta raden @ source: shell scriptet som innehåller funktionerna som anropas här
+##
+## funktions-namn|input-parameter|förväntad output resultat
+##
+## Om output enbart innehåller ett heltal, så jämförs funktionens retur-värde istället för ouptut-text
+##
+## Om in-parameter eller förväntad-fältet inehåller $(...) så kommer den funktionen att first evalueras och sedan jämföras
+# Tex: __parse_day_str|today|$(date +%Y-%m-%d)T$(date +%H:%M)
+
+
+
+
+
+
+#__parse_day_str|today|$(date +%Y-%m-%d)T08:00
+
+#__parse_datetime|today $(date +%H:%M)|$(date +%Y-%m-%d)T$(date +%H:%M)
+
+# __parse_today|today|<dagens-datum>T08:00
+# __parse_today|idag|<dagens-datum>T08:00
+
+
+# __parse_today|tomorrow|<morgon-datum>T08:00
+# __parse_today|tomorow|<morgon-datum>T08:00
+# __parse_today|tom|<morgon-datum>T08:00
+# __parse_today|imorgon|<morgon-datum>T08:00

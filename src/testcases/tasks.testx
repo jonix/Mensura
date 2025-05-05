@@ -1,0 +1,31 @@
+#@ source: task-public.sh
+
+## test_target: task-meeting
+
+SETUP
+  task rc.confirmation=no rc.dependency.confirmation=no rc.recurrence.confirmation=no rc.verbose=nothing rc.blanklines=false rc.json.array=on rc.json=true rc.verbose=off rc.color=off rc.shadow=1 rc.gc=off rc.default.project=meetings rc.default.priority=Betydande delete all > /dev/null
+END
+
+# Enkelt möte fredag kl 14:00–15:00
+task-meeting "Planeringsmöte med teamet" fredag 14:00 1h
+=> Planerade mötet "Planeringsmöte med teamet"
+
+# Kontrollera att uppgiften finns
+task +LATEST export | jq -r '.[0].description'
+=> Planeringsmöte med teamet
+
+# Kontrollera att korrekt projekt sattes
+task +LATEST export | jq -r '.[0].project'
+=> meetings
+
+# Kontrollera att annotationen innehåller metadata
+task +LATEST export | jq -r '.[0].annotations[0].description' | grep -q "Start:"
+=> *
+
+# Kontrollera att slutet blev korrekt 1h efter
+task +LATEST export | jq -r '.[0].annotations[0].description' | grep -q "Slut:"
+=> *
+
+TEARDOWN
+  task rc.confirmation=no rc.verbose=off rc.color=off delete all > /dev/null
+END

@@ -1,0 +1,16 @@
+#@ source: parse-datetime.sh
+## Format:
+## Översta raden @ source: shell scriptet som innehåller funktionerna som anropas här
+##
+## funktions-namn|input-parameter|förväntad output resultat
+##
+## Om output enbart innehåller ett heltal, så jämförs funktionens retur-värde istället för ouptut-text
+##
+## Om in-parameter eller förväntad-fältet inehåller $(...) så kommer den funktionen att first evalueras och sedan jämföras
+# Tex: __parse_day_str|today|$(date +%Y-%m-%d)T$(date +%H:%M)
+
+
+# Olika Datum format
+__add_offset_to_datetime|2024-05-03T12:00 30m|2024-05-03T12:30|
+__add_offset_to_datetime|2024-05-03 12:00 30m|2024-05-03T12:30|
+

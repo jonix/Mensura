@@ -1,0 +1,34 @@
+#@ source: parse-datetime.sh
+## Format:
+## Översta raden @ source: shell scriptet som innehåller funktionerna som anropas här
+##
+## funktions-namn|input-parameter|förväntad output resultat
+##
+## Om output enbart innehåller ett heltal, så jämförs funktionens retur-värde istället för ouptut-text
+##
+## Om in-parameter eller förväntad-fältet inehåller $(...) så kommer den funktionen att first evalueras och sedan jämföras
+# Tex: __parse_day_str|today|$(date +%Y-%m-%d)T$(date +%H:%M)
+
+
+# Ögonblickligen
+#__parse_now_time|now|$(date +%Y-%m-%dT%H:%M)
+#__parse_now_time|nu|$(date +%Y-%m-%dT%H:%M)
+
+# Offsets med prefix nu/now
+#__parse_now_time|now|$(date +%Y-%m-%dT%H:%M)
+#__parse_now_time|nu +30m|$(date -d "+30 minutes" +%Y-%m-%dT%H:%M)
+#__parse_now_time|nu +1h|$(date -d "+1 hour" +%Y-%m-%dT%H:%M)
+#__parse_now_time|nu +1h30m|$(date -d "+1 hour 30 minutes" +%Y-%m-%dT%H:%M)
+
+# Offset utan prefix nu/now
+__parse_now_time|+30m|$(date -d "+30 minutes" +%Y-%m-%dT%H:%M)
+__parse_now_time|+1h|$(date -d "+1 hour" +%Y-%m-%dT%H:%M)
+__parse_now_time|+1h30m|$(date -d "+1 hour 30 minutes" +%Y-%m-%dT%H:%M)
+
+# Offset utan prefix nu/now, utan + prefix
+__parse_now_time|30m|$(date -d "+30 minutes" +%Y-%m-%dT%H:%M)
+__parse_now_time|1h|$(date -d "+1 hour" +%Y-%m-%dT%H:%M)
+__parse_now_time|1h30m|$(date -d "+1 hour 30 minutes" +%Y-%m-%dT%H:%M)
+
+# Offset med bara minuter
+__parse_now_time|30|$(date -d "+30 minutes" +%Y-%m-%dT%H:%M)

@@ -1,0 +1,135 @@
+#@ source: parse-datetime.sh
+## Format:
+## Översta raden @ source: shell scriptet som innehåller funktionerna som anropas här
+##
+## funktions-namn|input-parameter|förväntad output resultat
+##
+## Om output enbart innehåller ett heltal, så jämförs funktionens retur-värde istället för ouptut-text
+##
+## Om in-parameter eller förväntad-fältet inehåller $(...) så kommer den funktionen att first evalueras och sedan jämföras
+# Tex: __parse_day_str|today|$(date +%Y-%m-%d)T$(date +%H:%M)
+
+
+##--- Datum --- ##
+# -- idag med start av dagen
+__parse_datetime|idag|$(date +%Y-%m-%dT08:00)
+__parse_datetime|today|$(date +%Y-%m-%dT08:00)
+
+# -- idag med klockslag, svenska --
+__parse_datetime|idag 13:30|$(date +%Y-%m-%dT13:30)
+__parse_datetime|idag 1330|$(date +%Y-%m-%dT13:30)
+__parse_datetime|idag 13.30|$(date +%Y-%m-%dT13:30)
+
+# -- idag med klockslag, engelska --
+__parse_datetime|today 13:30|$(date +%Y-%m-%dT13:30)
+__parse_datetime|today 1330|$(date +%Y-%m-%dT13:30)
+__parse_datetime|today 13.30|$(date +%Y-%m-%dT13:30)
+
+# -- idag med offset
+__parse_datetime|idag +4h|$(date +%Y-%m-%dT12:00)
+__parse_datetime|idag +45m|$(date +%Y-%m-%dT08:45)
+
+## -- Klockslag -- ##
+
+# -- idag Nu på en gång
+__parse_datetime|now|$(date +%Y-%m-%dT%H:%M)
+__parse_datetime|nu|$(date +%Y-%m-%dT%H:%M)
+
+
+# TRASIG:__parse_datetime|15:00|$(date +%Y-%m-%dT15:00)
+
+## -- Namngivna dagar -- ##
+# Olika namngivna dagar, Engelska fulla
+__parse_datetime|monday|$(date -d "next monday" +%Y-%m-%d)T08:00
+__parse_datetime|tuesday|$(date -d "next tuesday" +%Y-%m-%d)T08:00
+__parse_datetime|wednesday|$(date -d "next wednesday" +%Y-%m-%d)T08:00
+__parse_datetime|thursday|$(date -d "next thursday" +%Y-%m-%d)T08:00
+__parse_datetime|friday|$(date -d "next friday" +%Y-%m-%d)T08:00
+__parse_datetime|saturday|$(date -d "next saturday" +%Y-%m-%d)T08:00
+__parse_datetime|sunday|$(date -d "next sunday" +%Y-%m-%d)T08:00
+
+# Olika namngivna dagar, Engelska fökortade
+__parse_datetime|mon|$(date -d "next monday" +%Y-%m-%d)T08:00
+__parse_datetime|tues|$(date -d "next tuesday" +%Y-%m-%d)T08:00
+__parse_datetime|wed|$(date -d "next wednesday" +%Y-%m-%d)T08:00
+__parse_datetime|thurs|$(date -d "next thursday" +%Y-%m-%d)T08:00
+__parse_datetime|fri|$(date -d "next friday" +%Y-%m-%d)T08:00
+__parse_datetime|satur|$(date -d "next saturday" +%Y-%m-%d)T08:00
+__parse_datetime|sun|$(date -d "next sunday" +%Y-%m-%d)T08:00
+
+# Olika namngivna dagar, med kombination
+__parse_datetime|måndag 13:00|$(date -d "next monday" +%Y-%m-%d)T13:00
+__parse_datetime|tisdag 1200|$(date -d "next tuesday" +%Y-%m-%d)T12:00
+__parse_datetime|onsdag 11.00|$(date -d "next wednesday" +%Y-%m-%d)T11:00
+__parse_datetime|torsdag|$(date -d "next thursday" +%Y-%m-%d)T08:00
+__parse_datetime|fredag|$(date -d "next friday" +%Y-%m-%d)T08:00
+__parse_datetime|lördag|$(date -d "next saturday" +%Y-%m-%d)T08:00
+__parse_datetime|söndag|$(date -d "next sunday" +%Y-%m-%d)T08:00
+
+
+
+
+
+## --- Offset --- ##
+# -- idag med tids offset
+__parse_datetime|idag +1h|$(date +%Y-%m-%dT09:00)
+__parse_datetime|today +1h|$(date +%Y-%m-%dT09:00)
+__parse_datetime|idag +30m|$(date +%Y-%m-%dT08:30)
+__parse_datetime|today +30m|$(date +%Y-%m-%dT08:30)
+__parse_datetime|today +1h30m|$(date +%Y-%m-%dT09:30)
+__parse_datetime|nu +1h30m|$(date -d "+1 hour 30 minutes" +%Y-%m-%dT%H:%M)
+# TODO: __parse_datetime|+1h30m|$(date -d "+1 hour 30 minutes" +%Y-%m-%dT%H:%M)
+__parse_datetime|monday +1h30m|$(date -d "next monday" +%Y-%m-%d)T09:30
+
+
+
+# Test av __parse_datetime med olika format och kombinationer
+
+# Vanliga datumformat utan tid (bör defaulta till 08:00)
+__parse_datetime|2025-04-27|2025-04-27T08:00
+__parse_datetime|20250427|2025-04-27T08:00
+__parse_datetime|04-27|2025-04-27T08:00
+__parse_datetime|04/27|2025-04-27T08:00
+
+# Tolka bara klockslag givnet
+__parse_datetime|0930|$(date +%Y-%m-%d)T09:30
+__parse_datetime|09:45|$(date +%Y-%m-%d)T09:45
+__parse_datetime|16.30|$(date +%Y-%m-%d)T16:30
+
+# Offsetformat (implicit idag)
+__parse_datetime|+30m|$(date -d "+30 minutes" +%Y-%m-%dT%H:%M)
+__parse_datetime|30m|$(date -d "+30 minutes" +%Y-%m-%dT%H:%M)
+__parse_datetime|1h|$(date -d "+1 hour" +%Y-%m-%dT%H:%M)
+__parse_datetime|1h30m|$(date -d "+1 hour 30 minutes" +%Y-%m-%dT%H:%M)
+#------------------#
+
+
+# Namngivna konceptdagar utan tid
+__parse_datetime|today|$(date +%Y-%m-%d)T08:00
+__parse_datetime|imorgon|$(date -d "tomorrow" +%Y-%m-%d)T08:00
+__parse_datetime|nu|$(date +%Y-%m-%dT%H:%M)
+
+# Namngivna veckodagar utan tid (nästa instans av dagen)
+__parse_datetime|monday|$(date -d "next monday" +%Y-%m-%d)T08:00
+__parse_datetime|fredag|$(date -d "next friday" +%Y-%m-%d)T08:00
+
+# Kombinationer av dag och tid
+__parse_datetime|today 10:30|$(date +%Y-%m-%d)T10:30
+
+# TODO: __parse_datetime|imorgon 14|$(date -d "tomorrow" +%Y-%m-%d)T14:00
+__parse_datetime|monday 08.15|$(date -d "next monday" +%Y-%m-%d)T08:15
+__parse_datetime|monday 0815|$(date -d "next monday" +%Y-%m-%d)T08:15
+__parse_datetime|monday 08:15|$(date -d "next monday" +%Y-%m-%d)T08:15
+# TODO__parse_datetime|fredag 08|$(date -d "next friday" +%Y-%m-%d)T08:00
+
+# Kombinationer med offset
+__parse_datetime|today +1h|$(date +%Y-%m-%d)T09:00
+__parse_datetime|today +90m|$(date +%Y-%m-%d)T09:30
+__parse_datetime|monday +45m|$(date -d "next monday" +%Y-%m-%d)T08:45
+
+# Felaktiga inmatningar
+__parse_datetime|abcd|ERROR
+__parse_datetime|2025-99-99|ERROR
+__parse_datetime|today banana|ERROR
+
+
