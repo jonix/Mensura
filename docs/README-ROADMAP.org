@@ -1,0 +1,44 @@
+#+title: Readme Roadmap
+
+#+begin_src mermaid :file system-components.png :results file :exports results
+graph TD
+    CLI["mensura-core<br>(Bash/CLI)"]
+    GUI["emacs-gui<br>(Emacs med Doom/org-roam)"]
+    LLM["mensura-llm-analytics<br>(Snäll spegling, LLM)"]
+    ANALYTICS["mensura-analytics<br>(Python/Pandas)"]
+    STORAGE["Logg/metadata storage<br>(.jsonl filer)"]
+    REPL["mensura-repl<br>(Docker REPL shell)"]
+
+    CLI -->|loggar till| STORAGE
+    GUI -->|skriver/visar| STORAGE
+    GUI -->|läser| CLI
+    GUI -->|frågar| LLM
+    GUI -->|visar trender från| ANALYTICS
+    REPL --> CLI
+#+end_src
+
+#+RESULTS:
+[[file:system-components.png]]
+
+
+#+begin_src mermaid :file system-info-flow.png :results file :exports results
+flowchart LR
+    Start[Starta uppgift<br>task-start]
+    Scan[Body-scan<br>task-scan]
+    Mood[Logga humör<br>task-emo]
+    Log[.jsonl-logg<br>append]
+    Analyze[Analysera logg<br>mensura-analytics]
+    Reflect[Snäll insikt<br>mensura-llm-analytics]
+    Org[Org-roam notat]
+
+    Start --> Scan
+    Scan --> Mood
+    Mood --> Log
+    Log --> Analyze
+    Log --> Reflect
+    Analyze --> Org
+    Reflect --> Org
+#+end_src
+
+#+RESULTS:
+[[file:system-info-flow.png]]
