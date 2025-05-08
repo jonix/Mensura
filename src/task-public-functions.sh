@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#######
+#
+# SYFTE: Att ta emot funktions anrop från task-entrypoint.sh
+# för att göra logiken som bygger upp Mensura funktioner till användare
+#
+#######
+
 #  Förhindra direkt exekvering från kommandoprompten som ett script
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "❌ Denna fil är en modul och ska inte köras direkt."
@@ -29,8 +36,9 @@ source "$__MENSURA_DIR/task-private.sh"   # Helper functions for the public task
 
 
 ##--
-##@ task-meeting:
-function task-meeting() {
+##@ task-meeting: Planera ett möte med naturligt datum/tid och kopplad till mötes-anteckning
+#   task-meeting: Planera ett möte med start/slut och anteckningsfil, utan att starta mötet
+function __entry_task_meeting() {
   local desc=""
   local day=""
   local start=""
@@ -39,7 +47,7 @@ function task-meeting() {
 
   # Kontrollera argument
   if [[ $# -lt 2 ]]; then
-    echo "❌ Användning: task-meeting \"Beskrivning\" [dag] starttid sluttid [taggar...]" >&2
+    echo "Användning: task-meeting \"Beskrivning\" [dag] starttid sluttid [taggar...]" >&2
     echo "Exempel: task-meeting \"Veckomöte\" fredag 10:00 +30m" >&2
     return 1
   fi
@@ -96,163 +104,9 @@ function task-meeting() {
 }
 
 
-##--
-##@ task-meeting: Planera ett möte med naturligt datum/tid och kopplad till mötes-anteckning
-task-meeting-deprecated() {
-  local desc="$1"
-  local day="$2"
-  local start_in="$3"
-  local end_in="$4"
-  local extra_tags="$5"
-
-  if [[ -z "$day" ]] ; then
-    day=$(__parse_today_str "today")
-  fi
-  echo "DAY: $day"
-
-  if [[ -z "$desc" ]] || [[ -z "$start_in" ]]; then
-    echo "Användning: task-meeting \"Beskrivning\" (dag) <starttid> [sluttid/offset] [taggar]"
-    echo "Exempel:   task-meeting \"Veckomöte\" now"
-    echo "Exempel:   task-meeting \"Veckomöte\" 14:00 15:00"
-    echo "Exempel:   task-meeting \"Veckomöte\" today 14:00 15:00"
-    echo "Exempel:   task-meeting \"Veckomöte\" fredag 14:00 15:00"
-    echo "Exempel:   task-meeting \"Veckomöte\" fredag 14:00  (30min antas)"
-    return 1
-  fi
-
-  local start_iso end_iso
-  start_iso=$(__parse_datetime "$day" "$start_in") || return 1
-
-
-  echo "HEJ1"
-  if [[ -n "$end_in" ]]; then
-    # Sluttid eller offset angiven
-    if [[ "$(__time_or_offset "$end_in")" == "OFFSET" ]]; then
-      echo "HEJ2"
-      end_iso=$(date -d "$start_iso $(__normalize_offset "$end_in")" +"%Y-%m-%dT%H:%M")
-    else
-      echo "HEJ3"
-      end_iso=$(__parse_datetime "$day" "$end_in") || return 1
-    fi
-  else
-    echo "HEJ4"
-    # Använd default mötestid
-    local offset="${TASK_MEETING_LENGTH:-30 minutes}"
-    end_iso=$(date -d "$start_iso $offset" +"%Y-%m-%dT%H:%M")
-  fi
-  echo "HEJ5"
-
-  local proj="${TASK_DEFAULT_PROJECT:-möten}"
-  local prio="${TASK_DEFAULT_PRIO:-Mindre}"
-  local tags="+meeting"
-  [[ -n "$extra_tags" ]] && tags+=" +$extra_tags"
-
-  local id note_file
-  id=$(task add "$desc" project:$proj priority:$prio due:$start_iso $tags | grep -oP '(?<=Created task )[0-9]+') || {
-    echo "❌ Kunde inte skapa mötes-task"
-    return 1
-  }
-
-  note_file="$HOME/.mensura/notes/meeting-${id}.md"
-  mkdir -p "$(dirname "$note_file")"
-
-  {
-    echo "# 🗓️ Mötesanteckningar för: $desc"
-    echo ""
-    echo "- Planerad start: $start_iso"
-    echo "- Planerat slut:  $end_iso"
-    echo ""
-    echo "---"
-    echo ""
-  } > "$note_file"
-
-  task "$id" annotate "Anteckningsfil: $note_file"
-  task "$id" annotate "Slut: $end_iso"
-
-  echo "✅ Mötet \"$desc\" registrerat som task $id"
-  echo "📝 Anteckningar sparas i: $note_file"
-}
-
-
-## ---
-##
-##@ task-meeting: Planera ett möte med start/slut och anteckningsfil, utan att starta mötet
-task-meeting---deprecacated() {
-  local desc="$1"
-  local day="$2"
-  local start="$3"
-  local end="$4"
-  shift 4
-  local taglist=("$@")
-
-  if [[ -z "$desc" || -z "$day" || -z "$start" || -z "$end" ]]; then
-    echo "Användning: task-meeting <beskrivning> <dag/datum> <starttid> <sluttid|duration> [taggar...]"
-    echo "Exempel: task-meeting \"Möte med teamet\" fredag 13:30 14:15 tagg1 tagg2"
-    echo "Eller:    task-meeting \"Möte med Lisa\" måndag 09:00 45m planering"
-    return 1
-  fi
-
-  # 🧠 Tolkning av starttid
-  local start_iso
-  start_iso=$(__parse_datetime "$day" "$start") || return 1
-
-  # 🕒 Tolkning av sluttid (kan vara offset eller klockslag)
-  local end_iso
-  if [[ "$end" =~ ^[0-9]+([hm]|min|m|minuter|timme|h)?$ ]]; then
-    # Det är en duration → tolka som offset
-    local offset
-    offset=$(__normalize_offset "$end") || return 1
-    end_iso=$(LC_TIME=en_US.UTF-8 date -d "$start_iso $offset" "+%Y-%m-%dT%H:%M") || return 1
-  else
-    # Det är en specifik tid → kombinera med datum
-    local normalized_time
-    normalized_time=$(__normalize_time "$end") || return 1
-    end_iso=$(__parse_datetime "$day" "$normalized_time") || return 1
-  fi
-
-  # Metadata
-  local proj="$(__task_get_config TASK_DEFAULT_PROJECT)"
-  local prio="$(__task_get_config TASK_DEFAULT_PRIO)"
-
-  # Skapa uppgiften
-  local id
-  id=$(task add "$desc" project:$proj priority:$prio due:"$start_iso" +meeting "${taglist[@]/#/ +}" \
-    | grep -oP '(?<=Created task )[0-9]+') || {
-    echo "❌ Kunde inte skapa task"
-    return 1
-  }
-
-  # Annotera mötesmetadata
-  task "$id" annotate "Planerat start: $start_iso"
-  task "$id" annotate "Planerat slut: $end_iso"
-
-  # Skapa anteckningsfil
-  local notes_dir="${TASK_NOTES_DIR:-$HOME/.task-notes}"
-  mkdir -p "$notes_dir"
-  local note_file="$notes_dir/meeting-$id.md"
-
-  cat > "$note_file" <<EOF
-# Möte: $desc
-
-**Starttid:** $start_iso
-**Sluttid:**  $end_iso
-**Task-ID:**  $id
-**Taggar:**   ${taglist[*]}
-
----
-
-Här kan du skriva anteckningar under mötet...
-EOF
-
-  echo "✅ Mötet \"$desc\" är planerat (task $id)"
-  echo "📝 Anteckningsfil skapad: $note_file"
-}
-
-
-
 # ---
 ##@ task-us-pu: Används om du vill skapa en US eller PU task ---
-task-us-pu() {
+function __entry_task-us-pu() {
   local desc="$1"
   if [[ -z "$desc" ]]; then
     echo "Ange en beskrivning, t.ex. 'PU-123: Refaktorera API'"
@@ -281,7 +135,7 @@ task-us-pu() {
 
 # ---
 ##@ task-teknik: Används om du vill skapa en Task för 'teknik' projekt, kopplat mot US/PU ärende
-task-teknik() {
+function __entry_task-teknik() {
   local desc="$1"
   if [[ -z "$desc" ]]; then
     echo "Ange en beskrivning, t.ex. 'PU-123: Refaktorera API'"
@@ -305,7 +159,7 @@ task-teknik() {
 
 # ---
 ##@ task-brand: När systemen brinner och inget Jira ärende finns
-task-brand() {
+function __entry_task-brand() {
   local desc="$*"
   local proj="brand"
   local tags="interrupted"
@@ -334,7 +188,7 @@ task-brand() {
 
 # ---
 ##@ task-brandlog: Logga tid i efterhand, när systemet slutat brinnar och inget Jira ärende finns
-task-brandlog() {
+function __entry_task-brandlog() {
   local desc="$1"
   local start="$2"
   local dur="$3"
@@ -384,7 +238,7 @@ task-brandlog() {
 
 ## ---
 ##@ task-cancel: Avsluta ett givet ärende med ID, sätt tag till cancel
-task-canceled() {
+function __entry_task-canceled() {
   local id="$1"
 
   if [[ -z "$id" ]]; then
@@ -405,7 +259,7 @@ task-canceled() {
 }
 
 ##@ task-postpone: Flyttar fram en task (ange ID och nytt datum/tid)
-task-postpone() {
+function __entry_task-postpone() {
   local id="$1"
   local new_due="$2"
 
@@ -448,28 +302,28 @@ task-postpone() {
 
 ## ---
 ##@ task-done: Markera uppgift som helt klar
-task-done() {
+function __entry_task-done() {
   echo "Markerar uppgift som avklarad"
   task +ACTIVE done
 }
 
 ## ---
 ##@ task-fika: Markera uppgift som pausad
-task-fika() {
+function __entry_task-fika() {
   echo "Markerar uppgiften som pausad"
   task +ACTIVE stop
 }
 
 ## ---
 ##@ task-pause: Markera uppgift som pausad
-task-pause() {
+function __entry_task-pause() {
   echo "Markerar uppgiften som pausad"
   task +ACTIVE stop
 }
 
 ## ---
 ##@ task-resume: Återuppta senaste pausade ärendet
-task-resume() {
+function __entry_task-resume() {
   echo "Sätter igång senaste uppgiften"
   task +READY +LATEST start
 }
@@ -477,7 +331,7 @@ task-resume() {
 ### -- Reporter ---
 
 ##@ task-export: Exportera TaskWarrior-uppgifter i Markdown-format
-task-export() {
+function __entry_task-export() {
   local filter="${1:-status:pending}"
 
   echo "### Task-export  filter: $filter"
@@ -490,7 +344,7 @@ task-export() {
 }
 
 ##@ task-export-csv: Exportera TaskWarrior-uppgifter i CSV-format
-task-export-csv() {
+function __entry_task-export-csv() {
   local filter="${1:-status:pending}"
 
   echo "ID,Projekt,Prioritet,Beskrivning,Status"
