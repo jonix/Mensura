@@ -1,0 +1,17 @@
+#+title: Prereq Binaries for Mensura
+
+Mensura projektet böjar bli väldigt stort och ha mycket beroende
+
+
+Här dokumenerar jag externa program, bibliotek jag använder mig av för att bygga Mensura
+
+* Språk, infrastruktur
+Bash    - version 5+
+Pyton   - Version 3+ (framtid)
+Docker  - (Framtid)
+
+* Bash/Linux binärer
+git     - För att få ned koden
+curl    - För att automatiskt hämta saker från Internet
+direnv  - För att automatiskt sätta upp Mensura specifika miljövariabler utvecklings bash-funktioner+aliases
+  - sätt i ~/.bashrc   eval "$(direnv hook bash)"
