@@ -94,11 +94,11 @@ function __load_module_to_test() {
 }
 
 
-__strip_ansi() {
+function __strip_ansi() {
   sed -E 's/\x1B\[[0-9;]*[mK]//g'
 }
 
-__assert_output_contains() {
+function __assert_output_contains() {
   local output="$1"
   local needle="$2"
   local context="$3"
@@ -115,7 +115,7 @@ __assert_output_contains() {
   fi
 }
 
-__assert_output_equals() {
+function __assert_output_equals() {
   local output="$1"
   local expected="$2"
   local context="$3"
@@ -133,60 +133,7 @@ __assert_output_equals() {
   fi
 }
 
-function run_test_case__deprecated() {
-  local func="$1"
-  local input="$2"
-  local expected="$3"
-
-  local result
-  result=$($func $input 2>&1)
-  rc=$?
-  if [[ $rc -gt 1 ]]; then
-     echo "ERROR #$rc Något gick fel vid anrop till $func med input: $input"
-     return 1
-  fi
-
-  if [[ "$expected" == "ERROR" ]]; then
-    __assert_output_contains "$result" "ERROR" "$func \"$input\""
-  else
-    __assert_output_equals "$result" "$expected" "$func \"$input\""
-  fi
-}
-
-function run_test_case__xxx() {
-  local func="$1"
-  local input="$2"
-  local expected="$3"
-
-  local result rc
-  result=$($func $input 2>&1)
-  rc=$?
-
-  # Om expected är exakt ett heltal (0, 1, 42...), tolka det som returvärde
-  if [[ "$expected" =~ ^[0-9]+$ ]]; then
-    ((total++))
-    if [[ "$rc" -eq "$expected" ]]; then
-      ((passed++))
-      echo -e "${GREEN}✔︎${RESET} $func \"$input\" returnerade $rc som förväntat"
-    else
-      ((failed++))
-      echo -e "${RED}✘${RESET} $func \"$input\""
-      echo -e "   Förväntad returnkod: $expected"
-      echo -e "   Fick:                $rc"
-    fi
-    return
-  fi
-
-  # Om vi väntar oss ett felmeddelande
-  if [[ "$expected" == "ERROR" ]]; then
-    __assert_output_contains "$result" "ERROR" "$func \"$input\""
-  else
-    __assert_output_equals "$result" "$expected" "$func \"$input\""
-  fi
-}
-
-
-run_test_case() {
+function run_test_case() {
   local func="$1"
   local raw_input="$2"
   local raw_expected="$3"
@@ -237,7 +184,7 @@ run_test_case() {
   fi
 }
 
-__is_safe_expression() {
+function __is_safe_expression() {
   local expr="$1"
   local allowed_commands=("date" "echo" "basename" "dirname")
 
@@ -269,38 +216,6 @@ __is_safe_expression() {
 }
 
 
-
-function __is_safe_expression_xxx() {
-  local expr="$1"
-
-  # Tillåt endast följande "säkra" kommandon i $()
-  local allowed_commands=("date" "echo" "basename" "dirname")
-
-  # Extrahera alla kommandon från $(...)
-  local matches
-  matches=$(echo "$expr" | grep -oP '\$\((.*?)\)' | sed 's/[$()]//g')
-
-  # Om inga kommandon, det är säkert
-  [[ -z "$matches" ]] && return 0
-
-  for cmd in $matches; do
-    local name=$(echo "$cmd" | awk '{print $1}')
-    local allowed=0
-    for allowed_cmd in "${allowed_commands[@]}"; do
-      if [[ "$name" == "$allowed_cmd" ]]; then
-        allowed=1
-        break
-      fi
-    done
-    if [[ "$allowed" -eq 0 ]]; then
-      echo "⛔ Otillåtet kommando i eval: '$name'"
-      return 1
-    fi
-  done
-
-  return 0
-}
-
 function find_untested_files() {
   echo "Söker efter .sh-filer i src/ utan motsvarande test i testcases/ ..."
 
@@ -324,136 +239,6 @@ function find_untested_files() {
   done
 }
 
-find_untested_functions-xxx() {
-  echo "?? Letar efter funktioner utan tester..."
-
-  local src_dir="."
-  local test_dir="$src_dir/testcases"
-
-  local all_funcs=()
-  while read -r line; do
-    if [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_-]+)[[:space:]]*\(\)[[:space:]]*\{?$ ]]; then
-      all_funcs+=("${BASH_REMATCH[1]}")
-    fi
-  done < <(grep -hE '^\s*[a-zA-Z0-9_-]+\s*\(\)' "$src_dir"/*.sh)
-
-  local tested_funcs=()
-  while read -r func; do
-    tested_funcs+=("$func")
-  done < <(awk -F'|' 'NF>=1 && $1 !~ /^#/ { gsub(/^[ \t]+|[ \t]+$/, "", $1); print $1 }' "$test_dir"/*.test 2>/dev/null)
-
-  for func in "${all_funcs[@]}"; do
-    if ! printf "%s\n" "${tested_funcs[@]}" | grep -qx "$func"; then
-      echo "??  Funktionen saknar test: $func"
-    fi
-  done
-}
-
-
-find-untested-functions-xxxxx() {
-  echo "Letar efter funktioner utan tester (med stöd för # @untestable)..."
-
-  local src_dir="."
-  local test_dir="$sr_dir/testcases"
-
-  declare -A all_funcs
-  declare -a tested_funcs
-
-  # Steg 1: Samla alla funktioner i varje .sh-fil (exkludera @untestable)
-  for file in "$src_dir"/*.sh; do
-    local previous_line=""
-    while IFS= read -r line; do
-      if [[ "$line" =~ ^[[:space:]]*#.*@untestable ]]; then
-        previous_line="$line"
-        continue
-      fi
-
-      if [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_-]+)[[:space:]]*\(\)[[:space:]]*\{? ]]; then
-        local fname="${BASH_REMATCH[1]}"
-        if [[ "$previous_line" =~ @untestable ]]; then
-          previous_line=""
-          continue
-        fi
-        all_funcs["$fname"]="$file"
-      fi
-
-      previous_line="$line"
-    done < "$file"
-  done
-
-  # Steg 2: Samla alla testade funktioner
-  while IFS= read -r func; do
-    tested_funcs+=("$func")
-  done < <(awk -F'|' 'NF>=1 && $1 !~ /^#/ { gsub(/^[ \t]+|[ \t]+$/, "", $1); print $1 }' "$test_dir"/*.test 2>/dev/null)
-
-  # Steg 3: Jämför och rapportera otestade funktioner
-  for func in "${!all_funcs[@]}"; do
-    if ! printf "%s\n" "${tested_funcs[@]}" | grep -qx "$func"; then
-      echo "??  Otestad funktion: $func (fil: ${all_funcs[$func]})"
-    fi
-  done
-}
-
-find-untested-functionsxx() {
-  echo "🌲 Letar efter otestade funktioner i Mensura..."
-
-  local src_dir="."
-  local test_dir="$test_dir/testcases"
-
-  declare -A all_funcs
-  declare -a tested_funcs
-  declare -A untested_by_file
-
-  # 1. Samla alla funktioner i varje .sh-fil (förutom @untestable)
-  for file in "$src_dir"/*.sh; do
-    local previous_line=""
-    while IFS= read -r line; do
-      if [[ "$line" =~ ^[[:space:]]*#.*@untestable ]]; then
-        previous_line="$line"
-        continue
-      fi
-
-      if [[ "$line" =~ ^[[:space:]]*([a-zA-Z0-9_-]+)[[:space:]]*\(\)[[:space:]]*\{? ]]; then
-        local fname="${BASH_REMATCH[1]}"
-        if [[ "$previous_line" =~ @untestable ]]; then
-          previous_line=""
-          continue
-        fi
-        all_funcs["$file|$fname"]=1
-      fi
-      previous_line="$line"
-    done < "$file"
-  done
-
-  # 2. Samla alla testade funktioner från alla testfiler
-  while IFS= read -r func; do
-    tested_funcs+=("$func")
-  done < <(awk -F'|' 'NF>=1 && $1 !~ /^#/ { gsub(/^[ \t]+|[ \t]+$/, "", $1); print $1 }' "$test_dir"/*.test 2>/dev/null)
-
-  # 3. Samla otestade funktioner per fil
-  for key in "${!all_funcs[@]}"; do
-    local file="${key%%|*}"
-    local fname="${key##*|}"
-
-    if ! printf "%s\n" "${tested_funcs[@]}" | grep -qx "$fname"; then
-      untested_by_file["$file"]+="$fname "
-    fi
-  done
-
-  # 4. Visa som träd
-  for file in "${!untested_by_file[@]}"; do
-    echo "📄 ${file}"
-    local funcs=(${untested_by_file[$file]})
-    local last_index=$(( ${#funcs[@]} - 1 ))
-    for i in "${!funcs[@]}"; do
-      if [[ $i -eq $last_index ]]; then
-        echo "   └── ${funcs[$i]}"
-      else
-        echo "   ├── ${funcs[$i]}"
-      fi
-    done
-  done
-}
 
 
 # Kollar igenom alla *.sh filer och avgör om det fattas ett UnitTest till funktioner i testcases katalogen
@@ -465,7 +250,7 @@ find-untested-functionsxx() {
 # T ex
 #  source unittest-utilities ; find_untested_functions --json parse-datetime.sh
 #  OBS: formatet MÅSTE vara parameter 1
-find_untested_functions() {
+function find_untested_functions() {
   # Kan styra vilket format som skrivs ut, --tree, --short eller --json
   local format="tree"
 
