@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+#########
+#
+# En script fil där man kan sätta upp olika
+# Miljö/Bash variabler som är specifika för Mensura
+#
+# Om du vill ha enklare utvecklings-vardag, gör en
+# source environ.rc
+#
+# Om du vill göra det mycket lättare för dig, installera direnv
+# och i terminalen skapa filen  $MensuraDir/.envrc med koden
+#   source_env "environ.rc"
+# och i terminalen skriv
+# direnv allow 
+#
+# OBS: Stödjer enbart Miljöariabler
+#    export FOO="-jn20"
+#
+#
+#########
+
