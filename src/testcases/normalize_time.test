@@ -1,18 +1,18 @@
 #@ source: parse-datetime.sh
 
 ## -- Hurser ett klockslag ut ---
-__normalize_time|12:30|12:30:00
-__normalize_time|12.30|12:30:00
-__normalize_time|1230|12:30:00
+__normalize_time|12:30|12:30
+__normalize_time|12.30|12:30
+__normalize_time|1230|12:30
 
-__normalize_time|12:30:00|12:30:00
-__normalize_time|12.30:00|12:30:00
-__normalize_time|123000|12:30:00
+__normalize_time|12:30:00|12:30
+__normalize_time|12.30:00|12:30
+__normalize_time|123000|12:30
 
-__normalize_time|12|12:00:00
-__normalize_time|1|01:00:00
+__normalize_time|12|12:00
+__normalize_time|1|01:00
 
-__normalize_time|23:59:59|23:59:59
-__normalize_time|23:59|23:59:00
+__normalize_time|23:59:59|23:59
+__normalize_time|23:59|23:59
 # TODO: måste kolla hur förväntad fel fungerar här
 #__normalize_time|24:00:00|Ogiltig tid: 24:00:00 – 24h tid tillåter upp till 23:59:59

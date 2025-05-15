@@ -9,10 +9,13 @@
 ## Om in-parameter eller förväntad-fältet inehåller $(...) så kommer den funktionen att first evalueras och sedan jämföras
 ## Tex: __parse_day_str|today|$(date +%Y-%m-%d)T$(date +%H:%M)
 
+
 __trim|   foobar   |foobar
-__split_string|today 14:00|todayT14:00
-__split_string|"today 14:00"|todayT14:00
-__split_string|     today 14:00          |todayT14:00
-__split_string|"     today 14:00          "|todayT14:00
-__split_string|2025-05-01 14:00|2025-05-01T14:00
-__split_string|now +30m|nowT+30m
+
+## DEPRECATED, Method no exist no more
+# __split_string|today 14:00|todayT14:00
+# __split_string|"today 14:00"|todayT14:00
+# __split_string|     today 14:00          |todayT14:00
+# __split_string|"     today 14:00          "|todayT14:00
+# __split_string|2025-05-01 14:00|2025-05-01T14:00
+# __split_string|now +30m|nowT+30m
