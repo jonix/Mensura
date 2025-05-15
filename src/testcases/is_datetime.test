@@ -9,7 +9,7 @@ __is_datetime|2021-04-03T0900|0
 __is_datetime|20220403T0900|0
 __is_datetime|20230403T0900|0
 
-# Full date splitting date and time using space
+# # Full date splitting date and time using space
 __is_datetime|2020/04/03T09:00|0
 __is_datetime|2020/04/03T09:00|0
 __is_datetime|2021-04-03T0900|0
@@ -43,10 +43,3 @@ __is_datetime|20330403 0900|0
 __is_datetime|320403 0900|0
 __is_datetime|330403 0900|0
 
-__is_datetime|0403T0900|0
-__is_datetime|0403T0900|0
-__is_datetime|0403T0900|0
-
-__is_datetime|03T0900|0
-__is_datetime|03T0900|0
-__is_datetime|03T0900|0

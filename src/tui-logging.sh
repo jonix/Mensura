@@ -71,7 +71,8 @@ __log_debug() {
   local caller="${FUNCNAME[1]}"
   local full="🐞 [$caller] $msg"
 
-  if [[ "$DEBUG" == true ]]; then
+  DEBUG="true"
+  if [[ "$DEBUG" == "true" ]]; then
     if [ -t 1 ]; then
       echo -e "${GRAY}$full${RESET}" >&2
     else

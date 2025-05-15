@@ -46,52 +46,50 @@ source "$(dirname "${BASH_SOURCE[0]}")/utilities.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/task-config.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/tui-logging.sh"
 
-function __get_datetime_type() {
-  local input="$*"
-  input="$(__trim "$input")"
-
-  if [[ -z "$input" ]]; then
-    echo "UNKNOWN"
-    return 1
-  fi
-
-  if [[ "$input" =~ ^(now|nu)$ ]]; then
-    echo "NOW"
-    return 0
-  fi
-
-  if __is_namegiven_day "$input"; then
-    echo "NAMED_DAY"
-    return 0
-  fi
-
-  if __is_valid_datetime "$input"; then
-    echo "DATETIME"
-    return 0
-  fi
-
-  #if __is_valid_date "$input" &>/dev/null; then
-  #  echo "DATE"
-  #  return 0
-  #fi
-
-  if __is_time_or_offset "$input" &>/dev/null; then
-    local kind="$(__is_time_or_offset "$input")"
-    echo "$kind"
-    return 0
-  fi
-
-  if __is_iso_datetime "$input" ; then
-    echo "ISO_DATETIME"
-  fi
-
-  if __is_datetime "$inut" ; then
-    echo "DATETIME"
-  fi
-
-  echo "DESCRIPTION"
-  return 1
-}
+# TOO compliated just now
+# function __get_datetime_type() {
+#   local input="$*"
+#   input="$(__trim "$input")"
+#
+#   if [[ -z "$input" ]]; then
+#     echo "UNKNOWN"
+#     return 1
+#   fi
+#
+#   if [[ "$input" =~ ^(now|nu)$ ]]; then
+#     echo "NOW"
+#     return 0
+#   fi
+#
+#   if __is_namegiven_day "$input"; then
+#     echo "NAMED_DAY"
+#     return 0
+#   fi
+#
+#   if __is_valid_date "$input" &>/dev/null; then
+#     echo "DATE"
+#     return 0
+#   fi
+#
+#   if __is_time_or_offset "$input" &>/dev/null; then
+#     local kind="$(__is_time_or_offset "$input")"
+#     echo "$kind"
+#     return 0
+#   fi
+#
+#   if __is_iso_datetime "$input" ; then
+#     echo "ISO_DATETIME"
+#     return 0
+#   fi
+#
+#   if __is_datetime "$input" ; then
+#     echo "DATETIME"
+#     return 0
+#   fi
+#
+#   echo "DESCRIPTION"
+#   return 1
+# }
 
 
 
@@ -1141,28 +1139,68 @@ function __is_datetime__deprecated() {
 }
 
 # Make sure that we have T between stuff
-__is_iso_datetime() {
+function __is_iso_datetime() {
   local input="$*"
 
+  local regex1 regex2 regex3 regex4
+
   # Matcha: datumdel (2–8 siffror, med eller utan - eller /), följt av T, följt av HHMM eller HH:MM
-  if [[ "$input" =~ ^[0-9]{2,4}[-/]?[0-9]{2}[-/]?[0-9]{2}T[0-9]{2}(:?[0-9]{2})$ ]]; then
+  regex1="^[0-9]{2,4}[-/]?[0-9]{2}[-/]?[0-9]{2}T[0-9]{2}(:?[0-9]{2})$"
+
+  # t.ex. 20230403T0900 eller 230403T0900
+  regex2="^[0-9]{6,8}T[0-9]{4}$"
+
+  # t.ex. MMDDT0900 → implicit år
+  regex3="^[0-9]{4}T[0-9]{4}$"
+
+  # t.ex. DDT0900 → implicit år & månad
+  regex4="^[0-9]{2}T[0-9]{4}$"
+
+  if [[ "$input" =~ $regex1 ]]; then
     return 0
-  elif [[ "$input" =~ ^[0-9]{6,8}T[0-9]{4}$ ]]; then
-    # t.ex. 20230403T0900 eller 230403T0900
+  elif [[ "$input" =~ $regex2 ]]; then
     return 0
-  elif [[ "$input" =~ ^[0-9]{4}T[0-9]{4}$ ]]; then
-    # t.ex. MMDDT0900 → implicit år
+  elif [[ "$input" =~ $regex3 ]]; then
     return 0
-  elif [[ "$input" =~ ^[0-9]{2}T[0-9]{4}$ ]]; then
-    # t.ex. DDT0900 → implicit år & månad
+  elif [[ "$input" =~ $regex4 ]]; then
     return 0
   else
     return 1
   fi
 }
 
-
 function __is_datetime() {
+  local input="$*"
+
+  local regex1 regex2 regex3 regex4
+
+  # Matcha: datumdel med valfria bindestreck eller snedstreck + [T ]? + tid
+  regex1="^[0-9]{2,4}[-/]?[0-9]{2}[-/]?[0-9]{2}[T ]?[0-9]{2}(:?[0-9]{2})$"
+
+  # t.ex. 20230403T0900 eller 230403 0900
+  regex2="^[0-9]{6,8}[T ]?[0-9]{4}$"
+
+  # t.ex. MMDDT0900 eller MMDD 0900
+  regex3="^[0-9]{4}[T ]?[0-9]{4}$"
+
+  # t.ex. DDT0900 eller DD 0900
+  regex4=" ^[0-9]{2}[T ]?[0-9]{4}$"
+
+  if [[ "$input" =~ $regex1 ]]; then
+    return 0
+  elif [[ "$input" =~ $regex2 ]]; then
+    return 0
+  elif [[ "$input" =~ $regex3 ]]; then
+    return 0
+  elif [[ "$input" =~ $regex4 ]]; then
+    return 0
+
+  fi
+
+  return 1
+}
+
+function __is_datetime__depracated() {
   local input="$*"
 
   local regex1='^[0-9]{2,4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}(:. )[0-9]{2}$'  # (20)20-04-03(T )09(: )00

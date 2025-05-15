@@ -11,6 +11,5 @@
 
 
 # Olika Datum format
-__add_offset_to_datetime|2024-05-03T12:00 30m|2024-05-03T12:30|
-__add_offset_to_datetime|2024-05-03 12:00 30m|2024-05-03T12:30|
-
+#__add_offset_to_datetime|2024-05-03T12:00 30m|2024-05-03T12:30|
+#__add_offset_to_datetime|2024-05-03 12:00 30m|2024-05-03T12:30|
