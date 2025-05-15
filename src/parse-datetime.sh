@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -uo pipefail
+#set -u
+
 ### -- FUNKTIONS-LISTA --- ###
 #
 #  __parse_datetime      - Tolkar en fritext sträng till YYYY-MM-DDThh:mm
@@ -13,12 +16,14 @@
 #  __normalize_offset   - Normaliserar en offset till ett klockslag
 #  __normalize_day      - En given dag, antingen svenska eller engelska namn
 #
+# __is
 # __is_valid_date
 # __is_valid_datetime
 # __is_time_or_offset
 # __is_namegiven_day    - Returnerar 0 eller 1 om parametern är känd namngiven dag
 # __is_only_date_string - Returnerar 0 om en sträng enbart innerhållet ett datum (validerar) eller 1 om det inte stämmer
 # __is_date_string      - Returnerar 0 om en sträng börjar som ett datum (validerar) eller 1 om det inte stämmer (kan innehålla timestamps och offset)
+# __is_datetime
 #
 # __trim                - Tar bort whitespace i början och slutet av strängen
 # __combine_datetime  - Kombinerar 2 parametrar till str1Tstr2 (tänkt för att kombinera 'YYYY-MM-DD' 'HH:MM' till YYYY-MM-DDTHH:MM )
@@ -40,6 +45,55 @@ fi
 source "$(dirname "${BASH_SOURCE[0]}")/utilities.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/task-config.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/tui-logging.sh"
+
+function __get_datetime_type() {
+  local input="$*"
+  input="$(__trim "$input")"
+
+  if [[ -z "$input" ]]; then
+    echo "UNKNOWN"
+    return 1
+  fi
+
+  if [[ "$input" =~ ^(now|nu)$ ]]; then
+    echo "NOW"
+    return 0
+  fi
+
+  if __is_namegiven_day "$input"; then
+    echo "NAMED_DAY"
+    return 0
+  fi
+
+  if __is_valid_datetime "$input"; then
+    echo "DATETIME"
+    return 0
+  fi
+
+  #if __is_valid_date "$input" &>/dev/null; then
+  #  echo "DATE"
+  #  return 0
+  #fi
+
+  if __is_time_or_offset "$input" &>/dev/null; then
+    local kind="$(__is_time_or_offset "$input")"
+    echo "$kind"
+    return 0
+  fi
+
+  if __is_iso_datetime "$input" ; then
+    echo "ISO_DATETIME"
+  fi
+
+  if __is_datetime "$inut" ; then
+    echo "DATETIME"
+  fi
+
+  echo "DESCRIPTION"
+  return 1
+}
+
+
 
 #@ Tolkar en fritext sträng och returnerar YYYY-MM-DDThh:mm
 # Går att att skicka datum och tid som en sträng eller som två parametrar
@@ -76,13 +130,23 @@ function __parse_datetime() {
     date_part="$1"
     time_part="$2"
   else
-    __log_error "ERROR: Fel antal argument till __parse_datetime"
+    echo "ERROR: Fel antal argument till __parse_datetime"
     return 1
   fi
 
   local start_of_day=""
   start_of_day="$(__task_get_config "TASK_START_OF_DAY" 2>/dev/null || echo "08:00")"
 
+  # Hanterar ISO formaterad datumTtid
+  if __is_iso_datetime "$*" ; then
+    local input
+    input="$*"
+    norm_date="$(__normalize_date "$date_part")" || return 1
+    norm_time="$(__normalize_time "$time_part")" || return 1
+
+    echo  "${norm_date}T${norm_time}"
+    return 0
+  fi
 
   #echo "DEBUG: date-input: $date_part"
   #echo "DEBUG: time-input: $time_part"
@@ -304,13 +368,26 @@ function __normalize_datetime() {
   # --- Dela upp parametern(a) ---
   if [[ $# -eq 1 ]]; then
     IFS=' ' read -r date_part time_part <<< "$1"
-  elif [[ $# -eq 2 ]]; then
-    date_part="$1"; time_part="$2"
-  else
-    echo "Fel antal parametrar: förväntar 1 eller 2 argument" >&2
-    return 1
+   elif [[ $# -eq 2 ]]; then
+     date_part="$1"; time_part="$2"
+   else
+     echo "ERROR: Fel antal parametrar: förväntar 1 eller 2 argument"
+     return 1
   fi
 
+  if __is_iso_datetime "$*" ; then
+    local input
+    input="$*"
+
+    date_part="${input%%T*}"
+    time_part="${input#*T}"
+
+    norm_date="$(__normalize_date "$date_part")" || return 1
+    norm_time="$(__normalize_time "$time_part")" || return 1
+
+    echo  "${norm_date}T${norm_time}"
+    return 0
+  fi
 
   # --- Hantera fall: ENDAST tid eller ENDAST offset som första och enda param ---
   if [[ -z "$time_part" ]]; then
@@ -327,8 +404,9 @@ function __normalize_datetime() {
     fi
   fi
 
+
   # --- DATUMDEL ---
-  # Trimma whitespace och konvertera '/' → '-'
+  # Trimma whitespace och konvertera '/'  till '-'
   date_part="$(echo "$date_part" | tr -d '[:space:]' | sed 's|/|-|g')"
 
   # Namngiven dag (inkl. idag/nu/imorgon) har företräde
@@ -338,7 +416,7 @@ function __normalize_datetime() {
   elif __is_valid_date "$date_part"; then
     norm_date="$(__normalize_date "$date_part")"
   else
-    echo "Ogiltigt datum: $date_part"
+    echo "ERROR: Ogiltigt datum: $date_part"
     return 1
   fi
 
@@ -380,7 +458,7 @@ function __normalize_datetime() {
 # Tar emot en sträng och gör sitt absolut bästa att tolka det som en datum
 # Return: YYYY-MM-DD
 function __normalize_date() {
-  local input="$1"
+  local input="$*"
 
   # Ta bort blanksteg och ersätt eventuella snedstreck med bindestreck
   input="$(echo "$input" | tr -d '[:space:]' | sed 's|/|-|g')"
@@ -436,7 +514,75 @@ function __normalize_date() {
   fi
 }
 
-# Noramliserar strängar för tidsangivelse/klocka
+function __normalize_time() {
+  local input="$1"
+
+  # Ta bort inline-kommentarer och trimma mellanslag
+  input="${input%%#*}"
+  input="$(echo "$input" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+
+  # Rensa bort kolon och punkt: t.ex. 13.30 → 1330
+  local numeric="${input//[:.]/}"
+  numeric="${numeric//[^0-9]/}"
+
+  # Kontrollera att det är numeriskt
+  if [[ ! "$numeric" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: Ogiltigt tidsformat: $input"
+    return 1
+  fi
+
+  # Bestäm längd och sätt maxgräns
+  local maxval maxstr
+  case ${#numeric} in
+    6)
+      maxval=235959
+      maxstr="23:59:59"
+      ;;
+    4)
+      maxval=2359
+      maxstr="23:59"
+      ;;
+    3)
+      maxval=959
+      maxstr="09:59"
+      ;;
+    1|2)
+      maxval=23
+      maxstr="23:00"
+      ;;
+    *)
+      echo "ERROR: Oväntad tidslängd: $input"
+      return 1
+      ;;
+  esac
+
+  # Konvertera till decimal (skydda mot oktaltolkning)
+  numeric=$((10#$numeric))
+
+  if (( numeric > maxval )); then
+    echo "ERROR: Ogiltig tid: $input – 24h tid tillåter upp till $maxstr"
+    return 1
+  fi
+
+  # Formatera till HH:MM (utan sekunder)
+  case ${#numeric} in
+    1|2)
+      printf "%02d:00\n" "$numeric"
+      ;;
+    3)
+      printf "0%s:%s\n" "${numeric:0:1}" "${numeric:1:2}"
+      ;;
+    4)
+      printf "%s:%s\n" "${numeric:0:2}" "${numeric:2:2}"
+      ;;
+    6)
+      printf "%s:%s\n" "${numeric:0:2}" "${numeric:2:2}"
+      ;;
+  esac
+}
+
+
+# Normaliserar strängar för tidsangivelse/klocka
 # Stöd för att säga saker som
 #  > 12:30(:00), 12.30(.00), 1230(00) och alla normaliseras till 12:30:00
 #  > 10 som normaliseras till 10:00:00
@@ -445,7 +591,8 @@ function __normalize_date() {
 # Ger fel tillbaka om man försöker gå över 23:59 eller 23:59:59
 #
 # %% Test: testcases/normalize_time.test
-function __normalize_time() {
+
+function __normalize_time__deprecated() {
   local input="$1"
 
   # Rensa bort kolon och punkt: t.ex. 13.30 → 1330
@@ -461,29 +608,28 @@ function __normalize_time() {
   # Bedöm längd och om sekunder ingår
   local maxval=2359
   local maxstr="23:59"
-  if [[ ${#numeric} -eq 6 ]]; then
-    maxval=235959
-    maxstr="23:59:59"
+  if [[ 10${#numeric} -eq 4 ]]; then
+    maxval=2359
+    maxstr="23:59"
   fi
 
- if (( 10#$numeric > maxval )); then
-   echo "ERROR: Ogiltig tid: $input – 24h tid tillåter upp till $maxstr"
-   return 1
- fi
-
-  # Nu formatterar vi som HH:MM[:SS]
-  case ${#numeric} in
+  if (( 10${numeric} > maxval )); then
+    echo "ERROR: Ogiltig tid: $input – 24h tid tillåter upp till $maxstr"
+    return 1
+  fi
+  # Nu formatterar vi som HH:MM
+  case 10${#numeric} in
     1|2)
-      printf "%02d:00:00\n" "$numeric"
+      printf "%02d:00\n" "$numeric"
       ;;
     3)
-      printf "0%s:%s:00\n" "${numeric:0:1}" "${numeric:1:2}"
+      printf "0%s:%s\n" "${numeric:0:1}" "${numeric:1:2}"
       ;;
     4)
-      printf "%s:%s:00\n" "${numeric:0:2}" "${numeric:2:2}"
+      printf "%s:%s\n" "${numeric:0:2}" "${numeric:2:2}"
       ;;
     6)
-      printf "%s:%s:%s\n" "${numeric:0:2}" "${numeric:2:2}" "${numeric:4:2}"
+      printf "%s:%s\n" "${numeric:0:2}" "${numeric:2:2}"
       ;;
     *)
       echo "ERROR: Oväntad tidslängd: $input"
@@ -679,15 +825,38 @@ function __is_only_date_string() {
   return 1
 }
 
+# Avgör om en sträng har något med datum att göra eller inte
+# Return 0 om strängen anses vara datum baserad
+# Return 1 om strängen anses vara t ex namn, beskrivning, etc
+function __is_date_based() {
+  local input="$*"
+  input="$(__trim "$input")"
+  local lowercase=""
+  lowercase="${input,,}"
+  # Om tom, returnera false
+  [[ -z "$lowercase" ]] && return 1
+
+  # Kolla om den matchar något tidsrelaterat
+  if __is_namegiven_day "$lowercase"; then return 1; fi
+  if __is_valid_date "$lowercase" &> /dev/null; then return 1; fi
+  if __is_time_or_offset "$lowercase" &>/dev/null; then return 1; fi
+  if [[ "$" =~ ^(now|nu)$ ]]; then return 1; fi
+
+  # Om inget av ovan: det är sannolikt en beskrivning
+  return 0
+}
+
 
 function __is_valid_date() {
   local input="$1"
+  local lowercase=""
+  lowercase="${input,,}"
 
-  if [[ -z "$input" ]]; then
+  if [[ -z "$lowercase" ]]; then
     return 1
   fi
 
-  date_part=$(__normalize_date "$input")
+  date_part=$(__normalize_date "$lowercase")
   rc=$?
 
   if [[ "$rc" != "0" ]] ; then
@@ -697,6 +866,7 @@ function __is_valid_date() {
   return 0
 }
 
+# Verfierar om det är en sträng med datum+tid
 function __is_valid_datetime() {
   local input="$1"
 
@@ -704,14 +874,12 @@ function __is_valid_datetime() {
     return 1
   fi
 
-  date_part=$(__normalize_date "$input")
-  rc=$?
 
-  if [[ "$rc" != "0" ]] ; then
-      echo "ERROR: __is_valid_date: Ogitigt datum: $input" ; return 1
-      return $rc
+  if __normalize_datetime "$input" &> /dev/null; then
+    return 0
+  else
+    return 1
   fi
-  return 0
 }
 
 function __is_time_or_offset() {
@@ -836,6 +1004,75 @@ function __combine_datetime() {
   echo "${part1}T${part2}"
 }
 
+
+# split_datetime “INPUT”
+# Läser in INPUT i format som t.ex.
+#   2025-03-30T08:30, 20250330 0945, 03 30 09 45 eller bara 30 09 45
+# Skriver ut normaliserat ISO-datum + tid: "YYYY-MM-DD HH:MM"
+# Användning:
+#   read -r date time < <(__split_datetime "2025-05-04T08:30")
+#   read -r date time < <(__split_datetime "2025-05-04 08:30")
+
+split_datetime() {
+  local input="$1"
+
+  # Steg 1: fånga datumdelen + timme/minut
+  if [[ "$input" =~ ^(.+?)[T[:space:]]?([0-9]{2})[[:space:]:]?([0-9]{2})$ ]]; then
+    local datePart="${BASH_REMATCH[1]}"
+    local hh="${BASH_REMATCH[2]}"
+    local mm="${BASH_REMATCH[3]}"
+
+    # Steg 2: ta bort allt utom siffror i datumdelen
+    local cleanDate="${datePart//[^0-9]/}"
+    local len=${#cleanDate}
+
+    # Hämta dagens år och månad (Europa/Stockholm)
+    local currentYear currentMonth
+    currentYear=$(TZ=Europe/Stockholm date +%Y)
+    currentMonth=$(TZ=Europe/Stockholm date +%m)
+
+    local year month day
+
+    # Steg 3: tolka beroende på hur många siffror vi har kvar
+    case "$len" in
+      8)  # ÅÅÅÅMMDD
+          year="${cleanDate:0:4}"
+          month="${cleanDate:4:2}"
+          day="${cleanDate:6:2}"
+          ;;
+      6)  # YYMMDD → prefixa ’20’
+          year="20${cleanDate:0:2}"
+          month="${cleanDate:2:2}"
+          day="${cleanDate:4:2}"
+          ;;
+      4)  # MMDD → dagens år
+          year="$currentYear"
+          month="${cleanDate:0:2}"
+          day="${cleanDate:2:2}"
+          ;;
+      2)  # DD → dagens år & månad
+          year="$currentYear"
+          month="$currentMonth"
+          day="${cleanDate}"
+          ;;
+      *)
+          echo "Error: ogiltigt datumformat – '$datePart'"
+          return 1
+          ;;
+    esac
+
+    # Steg 4: skriv ut med nollutfyllnad
+    #printf "%04d-%02d-%02d %02d:%02d\n" "$year" "$month" "$day" "$hh" "$mm"
+
+    echo "${year}-${month}-${day}T${hh}:${mm}"
+    return 0
+  else
+    #echo "Error: kunde inte parsa '$input'" >&2
+    return 1
+  fi
+}
+
+
 # Splittar upp en sträng i formaten:
 #   YYYY-MM-DDTHH:MM  eller  YYYY-MM-DD HH:MM
 # till två delar:
@@ -845,7 +1082,7 @@ function __combine_datetime() {
 # Användning:
 #   read -r date time < <(__split_datetime "2025-05-04T08:30")
 #   read -r date time < <(__split_datetime "2025-05-04 08:30")
-function __split_datetime() {
+function __split_datetime__deprecated() {
   local input="$1"
 
   # Matcha båda format: med T eller med space
@@ -887,4 +1124,53 @@ function __add_offset_to_datetime() {
   echo "$result"
 }
 
+function __is_datetime__deprecated() {
+  local input="$*"
+
+  local    regex_dash_colon='^[0-9]{2,4}(-/ )[0-9]{2}(-/ )[0-9]{2}[T ][0-9]{2}(: )[0-9]{2}$'  # (20)20-04-03(T )09(: )00
+  local regex_slash_nocolon='^[0-9]{2,4}/[0-9]{2}/[0-9]{2}[T ][0-9]{4}$'           # (20)31/04/03T0900
+  local       regex_compact='^[0-9]{6,8}[T ][0-9]{4}$'                             # (20)220403T0900
+
+  if [[ "$input" =~ $regex_dash_colon ]]; then echo "1" ; return 0; fi
+  if [[ "$input" =~ $regex_dash_nocolon ]]; then echo "2" ; return 0; fi
+  if [[ "$input" =~ $regex_slash_colon ]]; then  echo "3" ; return 0; fi
+  if [[ "$input" =~ $regex_slash_nocolon ]]; then  echo "4" ; return 0; fi
+  if [[ "$input" =~ $regex_compact ]]; then echo "5" ; return 0; fi
+
+  return 1
+}
+
+# Make sure that we have T between stuff
+__is_iso_datetime() {
+  local input="$*"
+
+  # Matcha: datumdel (2–8 siffror, med eller utan - eller /), följt av T, följt av HHMM eller HH:MM
+  if [[ "$input" =~ ^[0-9]{2,4}[-/]?[0-9]{2}[-/]?[0-9]{2}T[0-9]{2}(:?[0-9]{2})$ ]]; then
+    return 0
+  elif [[ "$input" =~ ^[0-9]{6,8}T[0-9]{4}$ ]]; then
+    # t.ex. 20230403T0900 eller 230403T0900
+    return 0
+  elif [[ "$input" =~ ^[0-9]{4}T[0-9]{4}$ ]]; then
+    # t.ex. MMDDT0900 → implicit år
+    return 0
+  elif [[ "$input" =~ ^[0-9]{2}T[0-9]{4}$ ]]; then
+    # t.ex. DDT0900 → implicit år & månad
+    return 0
+  else
+    return 1
+  fi
+}
+
+
+function __is_datetime() {
+  local input="$*"
+
+  local regex1='^[0-9]{2,4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}(:. )[0-9]{2}$'  # (20)20-04-03(T )09(: )00
+  local regex2='^[0-9]{2,4}[T ][0-9]{2}(:. )$'                                   # 0403T0900
+
+  if [[ "$input" =~ $regex1 ]]; then return 0; fi
+  if [[ "$input" =~ $regex2 ]]; then return 0; fi
+
+  return 1
+}
 

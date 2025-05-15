@@ -1,0 +1,54 @@
+#@ source: parse-datetime.sh
+
+__get_datetime_type|budget|DESCRIPTION
+
+
+# # Beskrivningstest
+# __get_datetime_type | Veckomöte |DESCRIPTION
+# __get_datetime_type | Budget    |DESCRIPTION
+
+# # Tidstest
+# __get_datetime_type | 14:00   |TIME
+# __get_datetime_type | 1330    |TIME
+# __get_datetime_type | 10.30   |TIME
+
+
+# # Offsettest
+# __get_datetime_type | +30m    |OFFSET
+# __get_datetime_type | 45min   |OFFSET
+# __get_datetime_type | 1h30m   |OFFSET
+# __get_datetime_type | 30      |OFFSET
+# __get_datetime_type | 8       |OFFSET
+
+
+# # Datumtest
+# __get_datetime_type | 2025-05-14 |DATE
+# __get_datetime_type | 2025/05/14 |DATE
+# __get_datetime_type | 20250514   |DATE
+# __get_datetime_type | 240514     |DATE
+# __get_datetime_type | 24/05/14   |DATE
+# __get_datetime_type | 05-14      |DATE
+# __get_datetime_type | 05/14      |DATE
+# __get_datetime_type | 0514       |DATE
+
+# # Datum + Tid
+# __get_datetime_type | 2025-05-14T14:00 |DATETIME
+# __get_datetime_type | 2025-05-14 14:00 | DATETIME
+
+# # Nu
+# __get_datetime_type | now |NOW
+# __get_datetime_type | nu  |NOW
+
+# # Namngivna dagar
+# __get_datetime_type | fredag   | NAMED_DAY
+# __get_datetime_type | måndag   | NAMED_DAY
+# __get_datetime_type | idag     | NAMED_DAY
+# __get_datetime_type | imorgon  | NAMED_DAY
+# __get_datetime_type | tors     | NAMED_DAY
+# __get_datetime_type | wednes   | NAMED_DAY
+# __get_datetime_type | ONSDAG   | NAMED_DAY
+
+# # ❓ Okänt
+# __get_datetime_type | banana |DESCRIPTION
+# __get_datetime_type | ???    |DESCRIPTION
+# __get_datetime_type | Acme   |1

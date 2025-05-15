@@ -1,0 +1,39 @@
+#@ source: parse-datetime.sh
+
+## Format:
+## Översta raden @ source: shell scriptet som innehåller funktionerna som anropas här
+## funktions-namn|input-parameter|förväntad output resultat
+## Om det förväntade värdet är ett heltal, så jämför det mot returkoden från funktionen istället för text-output
+
+__is_valid_datetime|2025-04-03T12:30|0
+
+
+# # -- Fullständiga datum ---
+# __is_valid_date|2025-04-03|0
+# __is_valid_date|2025/04/03|0
+# __is_valid_date|20250403|0
+
+# # -- Kortform med år
+# __is_valid_date|25-04-03|0
+# __is_valid_date|25/04/03|0
+# __is_valid_date|250403|0
+
+# # -- Kortform utan år
+# __is_valid_date|04-03|0
+# __is_valid_date|04/03|0
+# __is_valid_date|0403|0
+
+
+# # Kolla att det inte går att ange felaktigt datum
+# __is_valid_date|2025-02-31|1
+# __is_valid_date|2025-13-01|1
+
+
+# # Kontroller att skottdagar fungerar
+# __is_valid_date|2024-02-29|0
+# __is_valid_date|2025-02-29|ERROR
+
+
+# # Hantera fel på ett vackert sätt
+# __is_valid_date|foobar|ERROR
+# __is_valid_date|foobar|1

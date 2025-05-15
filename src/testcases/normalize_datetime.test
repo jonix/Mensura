@@ -2,6 +2,7 @@
 
 
 # Fomer med fullständiga datum+tid
+__normalize_datetime|2025-03-11T10:00|2025-03-11T10:00
 __normalize_datetime|2025-03-10 10:00|2025-03-10T10:00
 __normalize_datetime|2025/03/10 10:00|2025-03-10T10:00
 __normalize_datetime|25-03-10 10:00|2025-03-10T10:00
@@ -21,9 +22,8 @@ __normalize_datetime|03/10|2025-03-10T08:00
 
 
 
+# DELETE THESE, this is the wrong concepts
 #__normalize_datetime|10:00|2025-03-10T08:00
-
-
 
 
 

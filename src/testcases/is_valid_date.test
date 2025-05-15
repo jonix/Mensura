@@ -29,3 +29,8 @@ __is_valid_date|2025-13-01|1
 # Kontroller att skottdagar fungerar
 __is_valid_date|2024-02-29|0
 __is_valid_date|2025-02-29|ERROR
+
+
+# Hantera fel på ett vackert sätt
+__is_valid_date|foobar|ERROR
+__is_valid_date|foobar|1

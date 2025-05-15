@@ -1,0 +1,39 @@
+#@ source: parse-datetime.sh
+
+# Full date, splitting date and time using T
+__is_iso_datetime|2020/04/03T09:00|0
+__is_iso_datetime|2020/04/03T09:00|0
+__is_iso_datetime|2021-04-03T0900|0
+__is_iso_datetime|2020-04-03T09:00|0
+__is_iso_datetime|2021-04-03T0900|0
+__is_iso_datetime|20220403T0900|0
+__is_iso_datetime|20230403T0900|0
+
+# Full date splitting date and time
+__is_iso_datetime|2020/04/03T09:00|0
+__is_iso_datetime|2020/04/03T09:00|0
+__is_iso_datetime|2021-04-03T0900|0
+__is_iso_datetime|2020-04-03T09:00|0
+__is_iso_datetime|2021-04-03T0900|0
+__is_iso_datetime|20220403T0900|0
+__is_iso_datetime|20230403T0900|0
+
+# Shortened year
+__is_iso_datetime|20/04/03T09:00|0
+__is_iso_datetime|20/04/03T09:00|0
+__is_iso_datetime|21-04-03T0900|0
+__is_iso_datetime|20-04-03T09:00|0
+__is_iso_datetime|21-04-03T0900|0
+__is_iso_datetime|220403T0900|0
+__is_iso_datetime|230403T0900|0
+
+
+# Implict year
+__is_iso_datetime|0403T0900|0
+__is_iso_datetime|0403T0900|0
+__is_iso_datetime|0403T0900|0
+
+# Implict year and month
+__is_iso_datetime|03T0900|0
+__is_iso_datetime|03T0900|0
+__is_iso_datetime|03T0900|0

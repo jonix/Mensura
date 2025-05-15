@@ -85,6 +85,11 @@ __parse_datetime|monday +1h30m|$(date -d "next monday" +%Y-%m-%d)T09:30
 
 # Test av __parse_datetime med olika format och kombinationer
 
+# ISO formatterade (normaliserade) datumformat med tid
+__parse_datetime|20250427T0915|2025-04-27T09:15
+__parse_datetime|2025-04-27T09:15|2025-04-27T09:15
+
+
 # Vanliga datumformat utan tid (bör defaulta till 08:00)
 __parse_datetime|2025-04-27|2025-04-27T08:00
 __parse_datetime|20250427|2025-04-27T08:00
