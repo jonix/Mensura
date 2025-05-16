@@ -803,3 +803,62 @@ function __is_only_date_string_yyyy() {
 
   return 1
 }
+
+
+function __normalize_time__deprecated() {
+  local input="$1"
+
+  # Rensa bort kolon och punkt: t.ex. 13.30 → 1330
+  local numeric="${input//[:.]/}"
+  numeric="${numeric//[^0-9]/}"
+
+  # Kontrollera att det är numeriskt
+  if [[ ! "$numeric" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: Ogiltigt tidsformat: $input"
+    return 1
+  fi
+
+  # Bedöm längd och om sekunder ingår
+  local maxval=2359
+  local maxstr="23:59"
+  if [[ 10${#numeric} -eq 4 ]]; then
+    maxval=2359
+    maxstr="23:59"
+  fi
+
+  if (( 10${numeric} > maxval )); then
+    echo "ERROR: Ogiltig tid: $input – 24h tid tillåter upp till $maxstr"
+    return 1
+  fi
+  # Nu formatterar vi som HH:MM
+  case 10${#numeric} in
+    1|2)
+      printf "%02d:00\n" "$numeric"
+      ;;
+    3)
+      printf "0%s:%s\n" "${numeric:0:1}" "${numeric:1:2}"
+      ;;
+    4)
+      printf "%s:%s\n" "${numeric:0:2}" "${numeric:2:2}"
+      ;;
+    6)
+      printf "%s:%s\n" "${numeric:0:2}" "${numeric:2:2}"
+      ;;
+    *)
+      echo "ERROR: Oväntad tidslängd: $input"
+      return 1
+      ;;
+  esac
+}
+
+function __is_datetime__depracated() {
+  local input="$*"
+
+  local regex1='^[0-9]{2,4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}(:. )[0-9]{2}$'  # (20)20-04-03(T )09(: )00
+  local regex2='^[0-9]{2,4}[T ][0-9]{2}(:. )$'                                   # 0403T0900
+
+  if [[ "$input" =~ $regex1 ]]; then return 0; fi
+  if [[ "$input" =~ $regex2 ]]; then return 0; fi
+
+  return 1
+}
