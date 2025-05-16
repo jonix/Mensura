@@ -16,7 +16,41 @@ else
   C1=""; C2=""; CERR=""; CB=""; CR=""
 fi
 
-trim() {
+
+
+function example() {
+
+# ================== EXEMPEL ==================
+FLAGS=(
+  "desc   | d  | s | 1 |    | Mötesbeskrivning (krävs)     | str"
+  "repeat | r  | s | 0 | weekly | Hur ofta                 | str"
+  "tags   | t  | m | 0 |    | Taggar (kan anges flera gånger) | str"
+  "count  | c  | s | 0 | 1  | Antal upprepningar          | int"
+  "dry_run|    | b | 0 |    | Torrkörning                 | bool"
+  "note   | n  | s | 0 |    | Noteringsfil                | str"
+  "help   | h  | h | 0 |    | Visa hjälp                  | "
+)
+POSITIONALS_SPEC=("inputfile:str:Indatafil:" "num:int:Antal rader:5")
+
+parse_args FLAGS POSITIONALS_SPEC "$@"
+
+# ===== Test/demo =====
+echo "DESC: $DESC"
+echo "REPEAT: $REPEAT"
+echo "TAGS: $TAGS"
+echo "TAGS_ARR: ${TAGS_ARR[*]}"
+echo "DRY_RUN: $DRY_RUN"
+echo "NOTE: $NOTE"
+echo "COUNT: $COUNT"
+echo "INPUTFILE: $INPUTFILE"
+echo "NUM: $NUM"
+echo "POSITIONALS: ${POSITIONAL[*]}"
+
+}
+
+
+
+function trim_args() {
   local var="$*"
   var="${var#"${var%%[![:space:]]*}"}"
   var="${var%"${var##*[![:space:]]}"}"
@@ -25,7 +59,7 @@ trim() {
   echo -n "$var"
 }
 
-check_valtype() {
+function check_valtype() {
   local val="$1" type="$2" regex="$3"
   case "$type" in
     int) [[ "$val" =~ ^-?[0-9]+$ ]] ;;
@@ -39,12 +73,66 @@ check_valtype() {
   esac
 }
 
-print_help() {
+function print_help() {
+  print_help_color "$@"
+}
+
+function print_help_color() {
   local prog="$1"
   local -n flag_defs=$2
   local -n pos_defs=$3
-  echo -e "${CB}Usage:${CR} $prog [options] ${C1}${pos_defs[*]//:*}${CR}"
-  echo ""
+
+  {
+    echo -e "${CB}Usage:${CR} $prog [options] ${C1}${pos_defs[*]//:*}${CR}\n"
+    printf "%-18s %-7s %-10s %-8s %-12s %-10s %s\n" "Flag" "Short" "Type" "Req'd" "Default" "Valtype" "Description"
+    echo "----------------------------------------------------------------------------------------------------------------------"
+    for def in "${flag_defs[@]}"; do
+      IFS='|' read -r flag short type required default desc valtype regex <<< "$def"
+      flag=$(trim "$flag"); short=$(trim "$short"); type=$(trim "$type")
+      required=$(trim "$required"); default=$(trim "$default"); desc=$(trim "$desc")
+      valtype=$(trim "$valtype"); regex=$(trim "$regex")
+      local flagstr="--$flag"
+      local shortstr=${short:+-$short}
+      [[ "$type" == "s" ]] && type="string"
+      [[ "$type" == "b" ]] && type="bool"
+      [[ "$type" == "m" ]] && type="multi"
+      [[ "$type" == "h" ]] && type="help"
+      local req_str
+      if [[ "$required" == "1" ]]; then
+        req_str="YES"
+        desc="${desc} [REQUIRED]"
+      else
+        req_str="no"
+      fi
+      printf "%-18s %-7s %-10s %-8s %-12s %-10s %s\n" \
+        "$flagstr" "$shortstr" "$type" "$req_str" "$default" "$valtype" "$desc"
+    done
+
+    if [[ "${#pos_defs[@]}" -gt 0 ]]; then
+      echo -e "\n${CB}Positionella argument:${CR}"
+      for pos in "${pos_defs[@]}"; do
+        IFS=':' read -r pname ptype pdesc pdefault <<< "$pos"
+        pname=$(trim "$pname"); ptype=$(trim "$ptype")
+        pdesc=$(trim "$pdesc"); pdefault=$(trim "$pdefault")
+        local required_label=""
+        if [[ -z "$pdefault" ]]; then
+          required_label="[REQUIRED]"
+        fi
+        printf "  %-12s %-8s %-12s %s\n" \
+          "$pname" "$ptype" "$required_label" "$pdesc"
+      done
+    fi
+    echo ""
+  } | sed -e $'s/YES/\033[1;31mYES\033[0m/g' \
+          -e $'s/\\[REQUIRED\\]/\033[1;31m[REQUIRED]\033[0m/g'
+}
+
+
+print_help_black-white() {
+  local prog="$1"
+  local -n flag_defs=$2
+  local -n pos_defs=$3
+  echo -e "${CB}Usage:${CR} $prog [options] ${C1}${pos_defs[*]//:*}${CR}\n"
   printf "%-18s %-7s %-10s %-8s %-12s %-10s %s\n" "Flag" "Short" "Type" "Req'd" "Default" "Valtype" "Description"
   echo "----------------------------------------------------------------------------------------------------------------------"
   for def in "${flag_defs[@]}"; do
@@ -58,7 +146,16 @@ print_help() {
     [[ "$type" == "b" ]] && type="bool"
     [[ "$type" == "m" ]] && type="multi"
     [[ "$type" == "h" ]] && type="help"
-    printf "%-18s %-7s %-10s %-8s %-12s %-10s %s\n" "$flagstr" "$shortstr" "$type" "$required" "$default" "$valtype" "$desc"
+    local req_str
+    if [[ "$required" == "1" ]]; then
+      req_str="YES"
+      desc="${desc} [REQUIRED]"
+    else
+      req_str="no"
+    fi
+    # Skriv först kolumnraden utan färg
+    printf "%-18s %-7s %-10s %-8s %-12s %-10s %s\n" \
+      "$flagstr" "$shortstr" "$type" "$req_str" "$default" "$valtype" "$desc"
   done
   if [[ "${#pos_defs[@]}" -gt 0 ]]; then
     echo -e "\n${CB}Positionella argument:${CR}"
@@ -66,13 +163,22 @@ print_help() {
       IFS=':' read -r pname ptype pdesc pdefault <<< "$pos"
       pname=$(trim "$pname"); ptype=$(trim "$ptype")
       pdesc=$(trim "$pdesc"); pdefault=$(trim "$pdefault")
-      printf "  ${C1}%-12s${CR} %-8s %-12s %s\n" "$pname" "$ptype" "$pdefault" "$pdesc"
+      local required_label=""
+      if [[ -z "$pdefault" ]]; then
+        required_label="[REQUIRED]"
+      fi
+      printf "  %-12s %-8s %-12s %s\n" \
+        "$pname" "$ptype" "$required_label" "$pdesc"
     done
   fi
   echo ""
+
+  # Sedan färg-markera YES och [REQUIRED] i efterhand (tillval)
+  # Det är fult men säkert:
+  # sed 's/YES/\x1b[1;31mYES\x1b[0m/g; s/\[REQUIRED\]/\x1b[1;31m[REQUIRED]\x1b[0m/g'
 }
 
-parse_args() {
+function parse_args() {
   local -n flags=$1
   shift
   local -n positionals_spec=$1
@@ -229,29 +335,3 @@ parse_args() {
   done
   export POSITIONAL
 }
-
-# ================== EXEMPEL ==================
-FLAGS=(
-  "desc   | d  | s | 1 |    | Mötesbeskrivning (krävs)     | str"
-  "repeat | r  | s | 0 | weekly | Hur ofta                 | str"
-  "tags   | t  | m | 0 |    | Taggar (kan anges flera gånger) | str"
-  "count  | c  | s | 0 | 1  | Antal upprepningar          | int"
-  "dry_run|    | b | 0 |    | Torrkörning                 | bool"
-  "note   | n  | s | 0 |    | Noteringsfil                | str"
-  "help   | h  | h | 0 |    | Visa hjälp                  | "
-)
-POSITIONALS_SPEC=("inputfile:str:Indatafil:" "num:int:Antal rader:5")
-
-parse_args FLAGS POSITIONALS_SPEC "$@"
-
-# ===== Test/demo =====
-echo "DESC: $DESC"
-echo "REPEAT: $REPEAT"
-echo "TAGS: $TAGS"
-echo "TAGS_ARR: ${TAGS_ARR[*]}"
-echo "DRY_RUN: $DRY_RUN"
-echo "NOTE: $NOTE"
-echo "COUNT: $COUNT"
-echo "INPUTFILE: $INPUTFILE"
-echo "NUM: $NUM"
-echo "POSITIONALS: ${POSITIONAL[*]}"
