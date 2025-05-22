@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -uo pipefail
+
+
 #  Förhindra direkt exekvering
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   echo "❌ Denna fil är en modul och ska inte köras direkt."
@@ -30,9 +33,11 @@ function __parse_arendetyp() {
     local typ="${upper%%-*}"
     desc="${desc//$raw/$upper}"
     echo "$typ|$upper|$desc"
-  else
-    echo "NONE||$desc"
+    return 0
   fi
+
+  echo "NONE||$desc"
+  return 1
 }
 
 # Privat metod som används för både US, PU och Teknik ärenden

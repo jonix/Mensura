@@ -37,9 +37,10 @@ fi
 
 
 # Se till att denna file laddas in en och endast en gång
-#source "$(dirname "${BASH_SOURCE[0]}")/bash-guard.sh" || return
-#__bash_module_guard || return
-#echo "SOURCING FILE: ${BASH_SOURCE[0]}"
+source "$(dirname "${BASH_SOURCE[0]}")/bash-guard-filecache.sh" || return
+__bash_filecache_guard || return
+
+
 
 ### INCLUDES ###
 source "$(dirname "${BASH_SOURCE[0]}")/utilities.sh"
@@ -964,7 +965,6 @@ function __combine_datetime() {
 # Användning:
 #   read -r date time < <(__split_datetime "2025-05-04T08:30")
 #   read -r date time < <(__split_datetime "2025-05-04 08:30")
-
 split_datetime() {
   local input="$1"
 
@@ -1025,29 +1025,6 @@ split_datetime() {
 }
 
 
-# Splittar upp en sträng i formaten:
-#   YYYY-MM-DDTHH:MM  eller  YYYY-MM-DD HH:MM
-# till två delar:
-#   - YYYY-MM-DD
-#   - HH:MM
-#
-# Användning:
-#   read -r date time < <(__split_datetime "2025-05-04T08:30")
-#   read -r date time < <(__split_datetime "2025-05-04 08:30")
-function __split_datetime__deprecated() {
-  local input="$1"
-
-  # Matcha båda format: med T eller med space
-  if [[ "$input" == *T* ]]; then
-    echo "${input%%T*} ${input#*T}"
-  elif [[ "$input" == *" "* ]]; then
-    echo "${input%% *} ${input#* }"
-  else
-    echo "? Ogiltigt format: förväntade YYYY-MM-DD[T ]HH:MM" >&2
-    return 1
-  fi
-}
-
 function __add_offset_to_datetime() {
   local datetime="$1"
   local offset="$2"
@@ -1076,21 +1053,6 @@ function __add_offset_to_datetime() {
   echo "$result"
 }
 
-function __is_datetime__deprecated() {
-  local input="$*"
-
-  local    regex_dash_colon='^[0-9]{2,4}(-/ )[0-9]{2}(-/ )[0-9]{2}[T ][0-9]{2}(: )[0-9]{2}$'  # (20)20-04-03(T )09(: )00
-  local regex_slash_nocolon='^[0-9]{2,4}/[0-9]{2}/[0-9]{2}[T ][0-9]{4}$'           # (20)31/04/03T0900
-  local       regex_compact='^[0-9]{6,8}[T ][0-9]{4}$'                             # (20)220403T0900
-
-  if [[ "$input" =~ $regex_dash_colon ]]; then echo "1" ; return 0; fi
-  if [[ "$input" =~ $regex_dash_nocolon ]]; then echo "2" ; return 0; fi
-  if [[ "$input" =~ $regex_slash_colon ]]; then  echo "3" ; return 0; fi
-  if [[ "$input" =~ $regex_slash_nocolon ]]; then  echo "4" ; return 0; fi
-  if [[ "$input" =~ $regex_compact ]]; then echo "5" ; return 0; fi
-
-  return 1
-}
 
 # Make sure that we have T between stuff
 function __is_iso_datetime() {
