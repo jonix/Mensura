@@ -16,7 +16,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   exit 1
 fi
 
-__bash_module_guard() {
+function __bash_module_guard() {
   local source_file="${BASH_SOURCE[1]}"
   local base_name guard_name
 
