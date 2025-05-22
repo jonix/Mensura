@@ -1,0 +1,3 @@
+#+title: Notification Systems
+
+När en scheduled task i TaskWarrior närmar sig, kasta upp en grafisk notifikation som påminner att en händelse är på väg att inträffa
