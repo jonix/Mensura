@@ -862,3 +862,19 @@ function __is_datetime__depracated() {
 
   return 1
 }
+
+function __is_datetime__deprecated() {
+  local input="$*"
+
+  local    regex_dash_colon='^[0-9]{2,4}(-/ )[0-9]{2}(-/ )[0-9]{2}[T ][0-9]{2}(: )[0-9]{2}$'  # (20)20-04-03(T )09(: )00
+  local regex_slash_nocolon='^[0-9]{2,4}/[0-9]{2}/[0-9]{2}[T ][0-9]{4}$'           # (20)31/04/03T0900
+  local       regex_compact='^[0-9]{6,8}[T ][0-9]{4}$'                             # (20)220403T0900
+
+  if [[ "$input" =~ $regex_dash_colon ]]; then echo "1" ; return 0; fi
+  if [[ "$input" =~ $regex_dash_nocolon ]]; then echo "2" ; return 0; fi
+  if [[ "$input" =~ $regex_slash_colon ]]; then  echo "3" ; return 0; fi
+  if [[ "$input" =~ $regex_slash_nocolon ]]; then  echo "4" ; return 0; fi
+  if [[ "$input" =~ $regex_compact ]]; then echo "5" ; return 0; fi
+
+  return 1
+}
