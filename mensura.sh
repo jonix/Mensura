@@ -41,7 +41,7 @@ source "$__MENSURA_DIR/task-public-functions.sh"  # Translates entry point to im
 ##@ task-meeting: Planera ett möte med naturligt datum/tid och kopplad till mötes-anteckning
 #   task-meeting: Planera ett möte med start/slut och anteckningsfil, utan att starta mötet
 function task_meeting() {
-  __xxx_entry_task-meeting "$@"
+  __entry_task-meeting "$@"
   return $?
 }
 
