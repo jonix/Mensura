@@ -7,8 +7,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 
 # Se till att denna file laddas in en och endast en gång
-source "$(dirname "${BASH_SOURCE[0]}")/bash-guard.sh" || return
-__bash_module_guard || return
+#source "$(dirname "${BASH_SOURCE[0]}")/bash-guard.sh" || return
+#__bash_module_guard || return
 
 
 # Terminal färger

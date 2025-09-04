@@ -37,8 +37,8 @@ fi
 
 
 # Se till att denna file laddas in en och endast en gång
-source "$(dirname "${BASH_SOURCE[0]}")/bash-guard-filecache.sh" || return
-__bash_filecache_guard || return
+#source "$(dirname "${BASH_SOURCE[0]}")/bash-guard-filecache.sh" || return
+#__bash_filecache_guard || return
 
 
 
