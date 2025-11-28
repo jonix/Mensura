@@ -23,9 +23,6 @@
 : "${BASH_GUARD_CACHE_DIR:=${XDG_CACHE_HOME:-$HOME/.cache}/bash-guard}"
 mkdir -p "$BASH_GUARD_CACHE_DIR"
 
-#!/usr/bin/env bash
-# Robust Bash include-guard med cache, force-reload och ignorering av utkommenterade funktioner/variabler.
-
 : "${BASH_GUARD_CACHE_DIR:=${XDG_CACHE_HOME:-$HOME/.cache}/bash-guard}"
 mkdir -p "$BASH_GUARD_CACHE_DIR"
 
